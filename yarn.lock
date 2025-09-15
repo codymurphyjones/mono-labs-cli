@@ -651,19 +651,6 @@
   resolved "https://registry.yarnpkg.com/@inquirer/type/-/type-3.0.8.tgz#efc293ba0ed91e90e6267f1aacc1c70d20b8b4e8"
   integrity sha512-lg9Whz8onIHRthWaN1Q9EGLa/0LFJjyM8mEUbL1eTi6yMGvBf8gvyDLtxSXztQsxMvhxxNpJYrwa1YHdq+w4Jw==
 
-"@mono-labs/cli@^0.0.7":
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/@mono-labs/cli/-/cli-0.0.7.tgz#abe50caf4a5e9c9d57e9d3124d2b8be6a00c2e9d"
-  integrity sha512-4UAfkooxw7XYE7CI4jtvxsbocUFA63cotgvh1sk3j5GIyoPi8bcFU4+vOgCfmbRWxAIm62IMrEwlDFwcn0o9Aw==
-  dependencies:
-    "@aws-sdk/client-dynamodb" "^3.848.0"
-    "@aws-sdk/util-dynamodb" "^3.848.0"
-    chalk "^4.1.2"
-    commander "^11.1.0"
-    dotenv "^17.2.0"
-    inquirer "^12.8.2"
-    tree-kill "^1.2.2"
-
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"
