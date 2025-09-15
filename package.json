@@ -1,6 +1,6 @@
 {
     "name": "@mono-labs/cli",
-    "version": "0.0.7",
+    "version": "0.0.12",
     "description": "A CLI tool for building and deploying projects",
     "type": "module",
     "main": "index.js",
@@ -10,7 +10,11 @@
     "scripts": {
         "start": "node bin/mono.js",
         "dev": "node bin/mono.js",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "deploy": "npm version patch && npm publish --access public --registry https://registry.npmjs.org/",
+        "release:patch": "npm version patch -m \"chore: release %s\" && npm publish --access public",
+        "release:minor": "npm version minor -m \"chore: release %s\" && npm publish --access public",
+        "release:major": "npm version major -m \"chore: release %s\" && npm publish --access public"
     },
     "keywords": [
         "cli",
