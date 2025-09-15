@@ -1,4 +1,4 @@
-# Haste CLI Tool
+# Mono CLI Tool
 
 A fast and efficient CLI tool for building and deploying projects.
 

@@ -1,3 +1,3 @@
-const haste = require('./lib/index');
+const main = require('./lib/index');
 
-module.exports = haste;
+module.exports = main;
