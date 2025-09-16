@@ -112,7 +112,7 @@ Invalid value for --platform: web. Valid options are: ios, android
 {out:ngrok_api https://1234.ngrok.dev}
 ```
 
-Then your `environments.dev.EXPO_PUBLIC_API_URL` which contains `${ngrok_api}`
+Then your `environments.dev.NEXT_PUBLIC_API_URL` which contains `${ngrok_api}`
 becomes `https://1234.ngrok.dev`.
 
 ## 6. Multi-Stage Environments
