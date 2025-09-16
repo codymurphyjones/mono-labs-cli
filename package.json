@@ -30,10 +30,10 @@
         "deploy",
         "tool"
     ],
-    "author": "Your Name",
+    "author": "Cody Jones",
     "license": "MIT",
     "engines": {
-        "node": ">=14.0.0"
+        "node": ">=20.0.0"
     },
     "dependencies": {
         "@aws-sdk/client-dynamodb": "^3.848.0",
