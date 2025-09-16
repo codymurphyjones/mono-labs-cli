@@ -1,15 +1,17 @@
 {
-  "actions": ["ultra -r --no-pretty --concurrency 400 watch"],
+  "actions": [
+    "ultra -r --no-pretty --concurrency 400 watch"
+  ],
   "environments": {
     "dev": {
       "EXPO_PUBLIC_API_URL": "${ngrok_api}",
       "ApiUrl": "${ngrok_api}",
-      "EXPO_FORCE_PROD": "false"
+      "NEXT_FORCE_PROD": "false"
     },
     "stage": {
       "EXPO_PUBLIC_API_URL": "${ngrok_api}",
       "ApiUrl": "${ngrok_api}",
-      "EXPO_FORCE_PROD": "true"
+      "NEXT_FORCE_PROD": "true"
     }
   },
   "options": {

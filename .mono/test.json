@@ -1,5 +1,8 @@
 {
-  "actions": ["node scripts/ngrok_setup", "git status"],
+  "actions": [
+    "node scripts/ngrok_setup",
+    "git status"
+  ],
   "argument": {
     "type": "string",
     "description": "Set environment to staging",
@@ -16,7 +19,10 @@
     "platform": {
       "description": "Build to target specific platform",
       "default": "ios",
-      "options": ["ios", "android"],
+      "options": [
+        "ios",
+        "android"
+      ],
       "type": "string"
     },
     "stage": {
@@ -31,12 +37,12 @@
     "dev": {
       "EXPO_PUBLIC_API_URL": "${ngrok_api}",
       "ApiUrl": "${ngrok_api}",
-      "EXPO_FORCE_PROD": "false"
+      "NEXT_FORCE_PROD": "false"
     },
     "stage": {
       "EXPO_PUBLIC_API_URL": "${ngrok_api}",
       "ApiUrl": "${ngrok_api}",
-      "EXPO_FORCE_PROD": "true"
+      "NEXT_FORCE_PROD": "true"
     }
   }
 }

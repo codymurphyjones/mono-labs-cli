@@ -181,13 +181,13 @@ These set `ngrok_api` and `region` for later substitution.
 		"dev": {
 			"EXPO_PUBLIC_API_URL": "${ngrok_api}",
 			"ApiUrl": "${ngrok_api}",
-			"EXPO_FORCE_PROD": "false",
+			"NEXT_FORCE_PROD": "false",
 			"TEST_ENV_VAR": "${arg}"
 		},
 		"stage": {
 			"EXPO_PUBLIC_API_URL": "${ngrok_api}",
 			"ApiUrl": "${ngrok_api}",
-			"EXPO_FORCE_PROD": "true",
+			"NEXT_FORCE_PROD": "true",
 			"TEST_ENV_VAR": "${arg}"
 		}
 	}

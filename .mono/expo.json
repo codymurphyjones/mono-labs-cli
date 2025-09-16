@@ -1,17 +1,21 @@
 {
-  "actions": ["yarn mono app dev"],
-  "preactions": ["node scripts/ngrok_setup"],
+  "actions": [
+    "yarn mono app dev"
+  ],
+  "preactions": [
+    "node scripts/ngrok_setup"
+  ],
   "environments": {
     "dev": {
       "EXPO_PUBLIC_API_URL": "${ngrok_api}",
       "ApiUrl": "${ngrok_api}",
-      "EXPO_FORCE_PROD": "false",
+      "NEXT_FORCE_PROD": "false",
       "NEXT_PUBLIC_TRPC_URL": "${ngrok_api}/trpc"
     },
     "stage": {
       "EXPO_PUBLIC_API_URL": "${ngrok_api}",
       "ApiUrl": "${ngrok_api}",
-      "EXPO_FORCE_PROD": "true",
+      "NEXT_FORCE_PROD": "true",
       "NEXT_PUBLIC_TRPC_URL": "${ngrok_api}/tprc"
     }
   },

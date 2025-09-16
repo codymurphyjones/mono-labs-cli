@@ -3,7 +3,10 @@
     "yarn backend dynamodb-admin -p 8082 --dynamo-endpoint=http://localhost:8000",
     "yarn mono backend server"
   ],
-  "preactions": ["docker compose up -d", "node scripts/ngrok_setup"],
+  "preactions": [
+    "docker compose up -d",
+    "node scripts/ngrok_setup"
+  ],
   "argument": {
     "type": "string",
     "description": "Set environment to staging",
@@ -32,13 +35,13 @@
     "dev": {
       "EXPO_PUBLIC_API_URL": "${ngrok_api}",
       "ApiUrl": "${ngrok_api}",
-      "EXPO_FORCE_PROD": "false",
+      "NEXT_FORCE_PROD": "false",
       "TEST_ENV_VAR": "${arg}"
     },
     "stage": {
       "EXPO_PUBLIC_API_URL": "${ngrok_api}",
       "ApiUrl": "${ngrok_api}",
-      "EXPO_FORCE_PROD": "true",
+      "NEXT_FORCE_PROD": "true",
       "TEST_ENV_VAR": "${arg}"
     }
   }
