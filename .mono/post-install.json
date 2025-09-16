@@ -1,0 +1,22 @@
+{
+  "actions": ["tamagui check", "yarn workspaces foreach --all --exclude next-app run build"],
+  "preaction": ["node scripts/ngrok_setup"],
+  "environments": {
+    "dev": {
+      "EXPO_PUBLIC_API_URL": "${ngrok_api}",
+      "ApiUrl": "${ngrok_api}",
+      "EXPO_FORCE_PROD": "false"
+    },
+    "stage": {
+      "EXPO_PUBLIC_API_URL": "${ngrok_api}",
+      "ApiUrl": "${ngrok_api}",
+      "EXPO_FORCE_PROD": "true"
+    }
+  },
+  "options": {
+    "dev": {
+      "description": "Run in dev mode",
+      "shortcut": "d"
+    }
+  }
+}

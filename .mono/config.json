@@ -1,0 +1,11 @@
+{
+  "workspace": {
+    "packageMaps": {
+      "web": "next-app",
+      "app": "expo-app",
+      "backend": "@my/backend",
+      "ui": "@my/ui"
+    },
+    "preactions": ["cp .env ${dir}/.env"]
+  }
+}

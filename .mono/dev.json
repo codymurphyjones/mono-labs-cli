@@ -1,0 +1,45 @@
+{
+  "actions": [
+    "yarn backend dynamodb-admin -p 8082 --dynamo-endpoint=http://localhost:8000",
+    "yarn mono backend server"
+  ],
+  "preactions": ["docker compose up -d", "node scripts/ngrok_setup"],
+  "argument": {
+    "type": "string",
+    "description": "Set environment to staging",
+    "default": "dev"
+  },
+  "options": {
+    "dev": {
+      "description": "Run in dev mode",
+      "shortcut": "d"
+    },
+    "android": {
+      "description": "Build to target android production profile"
+    },
+    "ios": {
+      "description": "Build to target ios production profile"
+    },
+    "stage": {
+      "description": "Set environment to staging"
+    },
+    "profile": {
+      "type": "string",
+      "description": "Set profile"
+    }
+  },
+  "environments": {
+    "dev": {
+      "EXPO_PUBLIC_API_URL": "${ngrok_api}",
+      "ApiUrl": "${ngrok_api}",
+      "EXPO_FORCE_PROD": "false",
+      "TEST_ENV_VAR": "${arg}"
+    },
+    "stage": {
+      "EXPO_PUBLIC_API_URL": "${ngrok_api}",
+      "ApiUrl": "${ngrok_api}",
+      "EXPO_FORCE_PROD": "true",
+      "TEST_ENV_VAR": "${arg}"
+    }
+  }
+}
