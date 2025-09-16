@@ -4,6 +4,14 @@
     "description": "A CLI tool for building and deploying projects",
     "type": "module",
     "main": "index.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/codymurphyjones/mono-labs-cli.git"
+    },
+    "bugs": {
+        "url": "https://github.com/codymurphyjones/mono-labs-cli/issues"
+    },
+    "homepage": "https://github.com/codymurphyjones/mono-labs-cli#readme",
     "bin": {
         "mono": "./bin/mono.js"
     },
