@@ -1,3 +1,3 @@
-const main = require('./lib/index');
+const { generateNewEnvList } = require('./lib/generateNewEnvList.js');
 
-module.exports = main;
+module.exports = { generateNewEnvList };
