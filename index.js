@@ -14,8 +14,7 @@ export {
 	getRootDirectory,
 	getRootJson,
 } from './lib/commands/loadFromRoot.js';
-import { generateNewEnvList } from './lib/commands/build-process/env.js';
-export { program } from './lib/app.js';
+import { generateNewEnvList } from './lib/generateNewEnvList.js';
 
 // Default export for convenience
 export default {
