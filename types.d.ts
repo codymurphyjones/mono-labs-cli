@@ -45,6 +45,8 @@ declare module '@mono-labs/cli' {
 		config: HasteConfig;
 	}
 
+	export declare function filterUnwantedEnvVars(env: string): NodeJS.ProcessEnv;
+
 	// Function type declarations
 	export declare function generateNewEnvList(
 		processEnv: NodeJS.ProcessEnv
