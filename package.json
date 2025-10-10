@@ -1,6 +1,6 @@
 {
     "name": "@mono-labs/cli",
-    "version": "0.0.134",
+    "version": "0.0.135",
     "description": "A CLI tool for building and deploying projects",
     "type": "module",
     "main": "index.js",
