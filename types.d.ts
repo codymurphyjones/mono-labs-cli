@@ -50,6 +50,10 @@ declare module '@mono-labs/cli' {
 	): NodeJS.ProcessEnv;
 	export declare function filterUnwantedEnvVars(env: string): NodeJS.ProcessEnv;
 
+	export declare function replaceTokens(
+		input: string,
+		tokens: Record<string, string>
+	): string;
 	// Function type declarations
 	export declare function generateNewEnvList(
 		processEnv: NodeJS.ProcessEnv
