@@ -36,6 +36,7 @@ declare module '@mono-labs/cli' {
 		default?: string | boolean;
 		shortcut?: string;
 		options?: string[];
+		allowAll?: boolean;
 	}
 
 	export interface BootResult {
