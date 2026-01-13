@@ -1,10 +1,20 @@
 {
     "name": "@mono-labs/cli",
-    "version": "0.0.174",
+    "version": "0.0.172",
     "description": "A CLI tool for building and deploying projects",
     "type": "module",
     "main": "index.js",
     "types": "types.d.ts",
+    "exports": {
+        ".": {
+            "types": "./types.d.ts",
+            "import": "./index.js"
+        },
+        "./*": {
+            "types": "./src/*.d.ts",
+            "import": "./src/*.js"
+        }
+    },
     "repository": {
         "type": "git",
         "url": "https://github.com/codymurphyjones/mono-labs-cli.git"
