@@ -14,10 +14,6 @@
             "types": "./src/expo.d.ts",
             "default": "./src/expo.js"
         },
-        "./replaceTokens": {
-            "types": "./src/replaceTokens.d.ts",
-            "default": "./src/replaceTokens.js"
-        },
         "./tools": {
             "types": "./src/tools.d.ts",
             "default": "./src/tools.js"

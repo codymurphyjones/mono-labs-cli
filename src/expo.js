@@ -1,3 +1,4 @@
+export { replaceTokens } from '../lib/commands/build-process/dataLayer';
 function filterEnvByPrefix(env, prefix) {
 	const filtered = {};
 	for (const key in env) {
