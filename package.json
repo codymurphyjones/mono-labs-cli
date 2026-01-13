@@ -54,6 +54,7 @@
     "files": [
         "bin/",
         "lib/",
+        "src/",
         "types.d.ts",
         "README.md"
     ]
