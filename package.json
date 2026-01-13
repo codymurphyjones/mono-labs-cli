@@ -5,16 +5,6 @@
     "type": "module",
     "main": "index.js",
     "types": "types.d.ts",
-    "exports": {
-        ".": {
-            "types": "./types.d.ts",
-            "import": "./index.js"
-        },
-        "./*": {
-            "types": "./src/*.d.ts",
-            "import": "./src/*.js"
-        }
-    },
     "repository": {
         "type": "git",
         "url": "https://github.com/codymurphyjones/mono-labs-cli.git"
