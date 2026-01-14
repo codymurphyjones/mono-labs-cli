@@ -1,4 +1,26 @@
-export { replaceTokens } from '../lib/commands/build-process/dataLayer';
+export function replaceTokens(str, env) {
+	if (typeof str !== 'string') return str;
+
+	return str.replace(/\$\{([^}]+)\}|\$([A-Z0-9_]+)/g, (m, k1, k2) => {
+		const k = k1 || k2;
+
+		// existing data layer takes priority (guarded in case not defined)
+		if (typeof hasData === 'function' && hasData(k)) {
+			const val = typeof getData === 'function' ? getData(k) : undefined;
+			return val == null ? '' : String(val);
+		}
+
+		// environment variables
+		if (env && Object.prototype.hasOwnProperty.call(env, k)) {
+			const val = env[k];
+			return val == null ? '' : String(val);
+		}
+
+		// fallback
+		return '';
+	});
+}
+
 function filterEnvByPrefix(env, prefix) {
 	const filtered = {};
 	for (const key in env) {
