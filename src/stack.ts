@@ -29,10 +29,8 @@ export abstract class CustomStack extends cdk.Stack {
 		// 🔑 Resolve account + region BEFORE super()
 		const resolvedEnv: cdk.Environment | undefined = {
 			account:
-				props.env?.account ??
-				process.env.CDK_DEPLOY_ACCOUNT ??
-				cdk.Aws.ACCOUNT_ID, // final fallback (lazy token)
-			region: props.env?.region ?? process.env.CDK_DEPLOY_REGION ?? 'us-east-2',
+				props.env?.account ?? process.env.AWS_ACCOUNT ?? cdk.Aws.ACCOUNT_ID, // final fallback (lazy token)
+			region: props.env?.region ?? process.env.AWS_REGION ?? 'us-east-2',
 		};
 
 		super(scope, id, {

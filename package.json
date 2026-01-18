@@ -22,7 +22,7 @@
             "types": "./src/cdk/cdk.d.ts",
             "default": "./src/cdk/index.js"
         },
-        "./stacks": {
+        "./stack": {
             "types": "./src/stack.ts",
             "default": "./src/stack.ts"
         }
