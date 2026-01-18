@@ -17,6 +17,14 @@
         "./tools": {
             "types": "./src/tools.d.ts",
             "default": "./src/tools.js"
+        },
+        "./cdk": {
+            "types": "./src/cdk/cdk.d.ts",
+            "default": "./src/cdk/index.js"
+        },
+        "./stacks": {
+            "types": "./src/stack.ts",
+            "default": "./src/stack.ts"
         }
     },
     "repository": {
@@ -53,8 +61,10 @@
     "dependencies": {
         "@aws-sdk/client-dynamodb": "^3.848.0",
         "@aws-sdk/util-dynamodb": "^3.848.0",
+        "aws-cdk-lib": "^2.235.0",
         "chalk": "^4.1.2",
         "commander": "^11.1.0",
+        "constructs": "^10.4.5",
         "cross-spawn": "^7.0.6",
         "dotenv": "^17.2.0",
         "inquirer": "^12.8.2",
