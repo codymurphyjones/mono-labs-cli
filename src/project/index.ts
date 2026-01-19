@@ -83,14 +83,23 @@ type DefaultDeployConfig = {
 	regions?: string[];
 };
 
-/** Convenience: load the JSON config using the resolution logic above. */
-export function loadAppConfig<
-	X extends string = string,
-	T = X extends 'app' ? DefaultAppConfig : DefaultDeployConfig,
->(
+/** Map known config types → their shapes */
+type ConfigTypeMap = {
+	app: DefaultAppConfig;
+	deployment: DefaultDeployConfig;
+};
+
+/** Resolve config type:
+ * - known keys → mapped type
+ * - anything else → unknown
+ */
+type ResolveConfig<T extends string> =
+	T extends keyof ConfigTypeMap ? ConfigTypeMap[T] : unknown;
+
+export function loadAppConfig<TType extends string>(
 	startDir: string = process.cwd(),
-	configType: X = 'app' as X
-): { config: T; meta: WorkspaceDetectResult } {
+	configType: TType
+): { config: ResolveConfig<TType>; meta: WorkspaceDetectResult } {
 	const fileName = `${configType}.config.json`;
 	const meta = detectWorkspaceAndConfigPath(startDir, fileName);
 
@@ -105,7 +114,7 @@ export function loadAppConfig<
 	}
 
 	const raw = fs.readFileSync(meta.configPath, 'utf8');
-	return { config: JSON.parse(raw) as T, meta };
+	return { config: JSON.parse(raw) as ResolveConfig<TType>, meta };
 }
 
 export const loadProjectConfig = loadAppConfig;
