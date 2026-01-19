@@ -80,6 +80,7 @@ type DefaultDeployConfig = {
 	baseDomain?: string;
 	webSubdomain?: string;
 	apiSubdomain?: string;
+	defaultKeyPair?: string;
 	regions?: string[];
 };
 
