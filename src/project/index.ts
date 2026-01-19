@@ -67,8 +67,17 @@ export function detectWorkspaceAndConfigPath(
 	return { cwd, workspaceRoot, isWorkspaceRoot, configDir, configPath };
 }
 
+type DefaultAppConfig = {
+	appleAppId?: string;
+	androidAppId?: string;
+	appName?: string;
+	easProjectId?: string;
+	appScheme?: string;
+	regions?: string[];
+};
+
 /** Convenience: load the JSON config using the resolution logic above. */
-export function loadAppConfig<T = unknown>(
+export function loadAppConfig<T = DefaultAppConfig>(
 	startDir: string = process.cwd(),
 	configFileName: string = 'app.config.json'
 ): { config: T; meta: WorkspaceDetectResult } {
