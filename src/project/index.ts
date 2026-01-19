@@ -76,12 +76,23 @@ type DefaultAppConfig = {
 	regions?: string[];
 };
 
+type DefaultDeployConfig = {
+	baseDomain?: string;
+	webSubdomain?: string;
+	apiSubdomain?: string;
+	regions?: string[];
+};
+
 /** Convenience: load the JSON config using the resolution logic above. */
-export function loadAppConfig<T = DefaultAppConfig>(
+export function loadAppConfig<
+	X extends string = string,
+	T = X extends 'app' ? DefaultAppConfig : DefaultDeployConfig,
+>(
 	startDir: string = process.cwd(),
-	configFileName: string = 'app.config.json'
+	configType: X = 'app' as X
 ): { config: T; meta: WorkspaceDetectResult } {
-	const meta = detectWorkspaceAndConfigPath(startDir, configFileName);
+	const fileName = `${configType}.config.json`;
+	const meta = detectWorkspaceAndConfigPath(startDir, fileName);
 
 	if (!fs.existsSync(meta.configPath)) {
 		const where =
@@ -89,10 +100,12 @@ export function loadAppConfig<T = DefaultAppConfig>(
 				`workspace root: ${meta.workspaceRoot}`
 			:	`cwd: ${meta.cwd}`;
 		throw new Error(
-			`Could not find ${configFileName} at ${meta.configPath} (detected from ${where}).`
+			`Could not find ${fileName} at ${meta.configPath} (detected from ${where}).`
 		);
 	}
 
 	const raw = fs.readFileSync(meta.configPath, 'utf8');
 	return { config: JSON.parse(raw) as T, meta };
 }
+
+export const loadProjectConfig = loadAppConfig;
