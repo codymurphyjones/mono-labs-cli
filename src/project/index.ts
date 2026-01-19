@@ -95,7 +95,7 @@ type ConfigTypeMap = {
 type ResolveConfig<TType extends string, TCustom = unknown> =
 	TType extends keyof ConfigTypeMap ? ConfigTypeMap[TType] : TCustom;
 
-export function loadAppConfig<TCustom = unknown, TType extends string = string>(
+export function loadAppConfig<TCustom = unknown, TType extends string = 'app'>(
 	configType: TType = 'app' as TType,
 	startDir: string = process.cwd()
 ): { config: ResolveConfig<TType, TCustom>; meta: WorkspaceDetectResult } {
