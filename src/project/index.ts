@@ -83,23 +83,22 @@ type DefaultDeployConfig = {
 	regions?: string[];
 };
 
-/** Map known config types → their shapes */
 type ConfigTypeMap = {
 	app: DefaultAppConfig;
 	deployment: DefaultDeployConfig;
 };
 
-/** Resolve config type:
- * - known keys → mapped type
- * - anything else → unknown
+/**
+ * If TType is a known key, use the mapped type.
+ * Otherwise use TCustom (default = unknown).
  */
-type ResolveConfig<T extends string> =
-	T extends keyof ConfigTypeMap ? ConfigTypeMap[T] : unknown;
+type ResolveConfig<TType extends string, TCustom = unknown> =
+	TType extends keyof ConfigTypeMap ? ConfigTypeMap[TType] : TCustom;
 
-export function loadAppConfig<TType extends string>(
-	startDir: string = process.cwd(),
-	configType: TType
-): { config: ResolveConfig<TType>; meta: WorkspaceDetectResult } {
+export function loadAppConfig<TCustom = unknown, TType extends string = string>(
+	configType: TType,
+	startDir: string = process.cwd()
+): { config: ResolveConfig<TType, TCustom>; meta: WorkspaceDetectResult } {
 	const fileName = `${configType}.config.json`;
 	const meta = detectWorkspaceAndConfigPath(startDir, fileName);
 
@@ -114,7 +113,7 @@ export function loadAppConfig<TType extends string>(
 	}
 
 	const raw = fs.readFileSync(meta.configPath, 'utf8');
-	return { config: JSON.parse(raw) as ResolveConfig<TType>, meta };
+	return { config: JSON.parse(raw) as ResolveConfig<TType, TCustom>, meta };
 }
 
 export const loadProjectConfig = loadAppConfig;
