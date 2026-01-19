@@ -25,6 +25,10 @@
         "./stack": {
             "types": "./src/stack.ts",
             "default": "./src/stack.ts"
+        },
+        "./project": {
+            "types": "./src/project/index.ts",
+            "default": "./src/project/index.ts"
         }
     },
     "repository": {
