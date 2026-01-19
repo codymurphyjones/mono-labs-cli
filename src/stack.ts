@@ -1,8 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import dotenv from 'dotenv';
+import { loadMergedEnv } from './project/merge-env';
 
-dotenv.config();
+loadMergedEnv();
 //cdk deploy --context owner=cody --context region=us-west-1
 
 const dev = 'dev';
