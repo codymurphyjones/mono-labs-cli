@@ -16,7 +16,7 @@ type WorkspaceDetectResult = {
  */
 export function detectWorkspaceAndConfigPath(
 	startDir: string = process.cwd(),
-	configFileName: string = 'app.config.json'
+	configFileName: string = 'app.mono.json'
 ): WorkspaceDetectResult {
 	const cwd = path.resolve(startDir);
 
@@ -100,7 +100,7 @@ export function loadAppConfig<TCustom = unknown, TType extends string = 'app'>(
 	configType: TType = 'app' as TType,
 	startDir: string = process.cwd()
 ): { config: ResolveConfig<TType, TCustom>; meta: WorkspaceDetectResult } {
-	const fileName = `${configType}.config.json`;
+	const fileName = `${configType}.mono.json`;
 	const meta = detectWorkspaceAndConfigPath(startDir, fileName);
 
 	if (!fs.existsSync(meta.configPath)) {
