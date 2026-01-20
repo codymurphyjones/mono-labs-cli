@@ -3,32 +3,32 @@
     "version": "0.0.192",
     "description": "A CLI tool for building and deploying projects",
     "type": "module",
-    "main": "index.js",
-    "types": "types.d.ts",
+    "main": "dist/index.js",
+    "types": "dist/types.d.ts",
     "exports": {
         ".": {
-            "types": "./types.d.ts",
-            "import": "./index.js"
+            "types": "./dist/types.d.ts",
+            "import": "./dist/index.js"
         },
         "./expo": {
-            "types": "./src/expo.d.ts",
-            "default": "./src/expo.js"
+            "types": "./dist/types/expo.d.ts",
+            "default": "./dist/expo.js"
         },
         "./tools": {
-            "types": "./src/tools.d.ts",
-            "default": "./src/tools.js"
+            "types": "./dist/types/tools.d.ts",
+            "default": "./dist/tools.js"
         },
         "./cdk": {
-            "types": "./src/cdk/cdk.d.ts",
-            "default": "./src/cdk/index.js"
+            "types": "./dist/types/cdk/cdk.d.ts",
+            "default": "./dist/cdk/index.js"
         },
         "./stack": {
-            "types": "./src/stack.ts",
-            "default": "./src/stack.ts"
+            "types": "./dist/types/stack.d.ts",
+            "default": "./dist/stack.js"
         },
         "./project": {
-            "types": "./src/project/index.ts",
-            "default": "./src/project/index.ts"
+            "types": "./dist/types/project/index.d.ts",
+            "default": "./dist/project/index.js"
         }
     },
     "repository": {
@@ -43,6 +43,7 @@
         "mono": "./bin/mono.js"
     },
     "scripts": {
+        "build": "tsc",
         "start": "node bin/mono.js",
         "dev": "node bin/mono.js",
         "test": "echo \"Error: no test specified\" && exit 1",
@@ -77,7 +78,8 @@
     },
     "devDependencies": {
         "eslint": "^8.57.0",
-        "expo": "^54.0.31"
+        "expo": "^54.0.31",
+        "typescript": "^5.9.3"
     },
     "files": [
         "bin/",
