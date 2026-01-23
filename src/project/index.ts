@@ -82,6 +82,12 @@ type DefaultDeployConfig = {
 	apiSubdomain?: string;
 	defaultKeyPair?: string;
 	regions?: string[];
+	ec2User?: string;
+};
+
+const requiredSystemDefaults = {
+	ec2User: 'ec2-user',
+	regions: ['us-east-1'],
 };
 
 type ConfigTypeMap = {
@@ -114,7 +120,20 @@ export function loadAppConfig<TCustom = unknown, TType extends string = 'app'>(
 	}
 
 	const raw = fs.readFileSync(meta.configPath, 'utf8');
-	return { config: JSON.parse(raw) as ResolveConfig<TType, TCustom>, meta };
+	const config = JSON.parse(raw) as ResolveConfig<TType, TCustom>;
+
+	// Apply requiredSystemDefaults for missing/null/undefined values
+	if (typeof config === 'object' && config !== null) {
+		for (const key of Object.keys(requiredSystemDefaults)) {
+			// @ts-ignore: index signature
+			if (config[key] === undefined || config[key] === null) {
+				// @ts-ignore: index signature
+				config[key] = requiredSystemDefaults[key];
+			}
+		}
+	}
+
+	return { config, meta };
 }
 
 export const loadProjectConfig = loadAppConfig;
