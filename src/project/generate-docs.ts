@@ -38,9 +38,6 @@ export async function generateDocsIndex({
 	const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
 	const links: string[] = [];
-	links.push('\n');
-	links.push('---');
-	links.push('\n');
 	for (const entry of entries) {
 		if (!entry.isFile()) continue;
 		if (!entry.name.endsWith('.md')) continue;
@@ -82,5 +79,5 @@ export async function generateDocsIndex({
 	links.push('');
 	links.push('🏠 ← [Back to README](../README.md)');
 
-	return links.join('\n');
+	return ['', '---', '', ...links].join('\n');
 }
