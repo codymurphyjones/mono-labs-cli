@@ -82,6 +82,8 @@ type DefaultDeployConfig = {
 	defaultKeyPair?: string;
 	regions: string[];
 	ec2User: string;
+	defaultVpcId?: string;
+	defaultVpcSecurityGroupId?: string;
 };
 
 const requiredSystemDefaults = {
