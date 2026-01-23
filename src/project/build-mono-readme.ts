@@ -13,7 +13,6 @@ const OUTPUT_README = path.join(OUTPUT_PATH, 'command-line.md');
 
 async function ensureParentDir(filePath: string): Promise<void> {
 	const dir = path.dirname(filePath);
-	console.log(`[ensureParentDir] Ensuring directory:`, dir);
 	await fs.mkdir(dir, { recursive: true });
 }
 
@@ -22,10 +21,9 @@ async function exists(p: string): Promise<boolean> {
 	try {
 		await fs.access(p);
 		// Log existence check
-		console.log(`[exists] Path exists:`, p);
+
 		return true;
 	} catch {
-		console.log(`[exists] Path does NOT exist:`, p);
 		return false;
 	}
 }
@@ -36,21 +34,18 @@ function toPosix(p: string): string {
 	return p.split(path.sep).join('/');
 }
 async function readJson<T = any>(filePath: string): Promise<T> {
-	console.log(`[readJson] Reading JSON file:`, filePath);
 	const raw = await fs.readFile(filePath, 'utf8');
 	try {
 		const parsed = JSON.parse(raw);
-		console.log(`[readJson] Successfully parsed:`, filePath);
+
 		return parsed;
 	} catch (err) {
-		console.error(`[readJson] Failed to parse JSON:`, filePath, err);
 		throw err;
 	}
 }
 async function listDir(dir: string): Promise<Dirent[]> {
-	console.log(`[listDir] Listing directory:`, dir);
 	const entries = await fs.readdir(dir, { withFileTypes: true });
-	console.log(`[listDir] Found ${entries.length} entries in:`, dir);
+
 	return entries;
 }
 function normalizeWorkspacePatterns(workspacesField: unknown): string[] {
@@ -86,19 +81,11 @@ async function expandWorkspacePattern(
 	root: string,
 	pattern: string
 ): Promise<string[]> {
-	console.log(
-		`[expandWorkspacePattern] Expanding pattern:`,
-		pattern,
-		`from root:`,
-		root
-	);
 	const segs = toPosix(pattern).split('/').filter(Boolean);
 
 	async function expandFrom(dir: string, segIndex: number): Promise<string[]> {
-		console.log(`[expandFrom] Directory:`, dir, `Segment index:`, segIndex);
 		if (segIndex >= segs.length) return [dir];
 		const seg = segs[segIndex];
-		console.log(`[expandFrom] Segment:`, seg);
 
 		if (seg === '**') {
 			const results: string[] = [];
@@ -106,16 +93,10 @@ async function expandWorkspacePattern(
 			const entries = await fs
 				.readdir(dir, { withFileTypes: true })
 				.catch(() => []);
-			console.log(
-				`[expandFrom] '**' entries in ${dir}:`,
-				entries.map((e) => e.name)
-			);
+
 			for (const e of entries) {
 				if (!e.isDirectory()) continue;
-				console.log(
-					`[expandFrom] Recursing into subdir:`,
-					path.join(dir, e.name)
-				);
+
 				results.push(...(await expandFrom(path.join(dir, e.name), segIndex)));
 			}
 			return results;
@@ -124,36 +105,27 @@ async function expandWorkspacePattern(
 		const entries = await fs
 			.readdir(dir, { withFileTypes: true })
 			.catch(() => []);
-		console.log(
-			`[expandFrom] Entries in ${dir}:`,
-			entries.map((e) => e.name)
-		);
+
 		const results: string[] = [];
 		for (const e of entries) {
 			if (!e.isDirectory()) continue;
 			if (!matchSegment(seg, e.name)) continue;
-			console.log(
-				`[expandFrom] Matched segment '${seg}' with directory:`,
-				e.name
-			);
+
 			results.push(...(await expandFrom(path.join(dir, e.name), segIndex + 1)));
 		}
 		return results;
 	}
 
 	const dirs = await expandFrom(root, 0);
-	console.log(`[expandWorkspacePattern] Expanded directories:`, dirs);
+
 	const pkgDirs: string[] = [];
 	for (const d of dirs) {
 		const pkgPath = path.join(d, 'package.json');
 		if (await exists(pkgPath)) {
-			console.log(`[expandWorkspacePattern] Found package.json:`, pkgPath);
 			pkgDirs.push(d);
-		} else {
-			console.log(`[expandWorkspacePattern] No package.json in:`, d);
 		}
 	}
-	console.log(`[expandWorkspacePattern] Final package directories:`, pkgDirs);
+
 	return [...new Set(pkgDirs)];
 }
 
@@ -161,27 +133,13 @@ async function findWorkspacePackageDirs(
 	repoRoot: string,
 	workspacePatterns: string[]
 ): Promise<string[]> {
-	console.log(
-		`[findWorkspacePackageDirs] repoRoot:`,
-		repoRoot,
-		`workspacePatterns:`,
-		workspacePatterns
-	);
 	const dirs: string[] = [];
 	for (const pat of workspacePatterns) {
-		console.log(`[findWorkspacePackageDirs] Expanding pattern:`, pat);
 		const expanded = await expandWorkspacePattern(repoRoot, pat);
-		console.log(
-			`[findWorkspacePackageDirs] Expanded dirs for pattern '${pat}':`,
-			expanded
-		);
+		dirs.push(...expanded);
 		dirs.push(...expanded);
 	}
 	const uniqueDirs = [...new Set(dirs)];
-	console.log(
-		`[findWorkspacePackageDirs] Final unique package dirs:`,
-		uniqueDirs
-	);
 	return uniqueDirs;
 }
 
@@ -195,10 +153,8 @@ async function readMonoConfig(): Promise<MonoConfig | null> {
 	}
 	try {
 		const config = await readJson<any>(configPath);
-		console.log(`[readMonoConfig] Loaded mono config.`);
 		return { path: configPath, config };
 	} catch (err) {
-		console.error(`[readMonoConfig] Failed to load mono config:`, err);
 		return null;
 	}
 }
@@ -208,9 +164,7 @@ function commandNameFromFile(filePath: string): string {
 }
 
 async function readMonoCommands(): Promise<MonoCommand[]> {
-	console.log(`[readMonoCommands] Reading mono commands from:`, MONO_DIR);
 	if (!(await exists(MONO_DIR))) {
-		console.log(`[readMonoCommands] Mono directory does not exist.`);
 		return [];
 	}
 	const entries = await listDir(MONO_DIR);
@@ -220,21 +174,15 @@ async function readMonoCommands(): Promise<MonoCommand[]> {
 		.map((e) => path.join(MONO_DIR, e.name))
 		.filter((p) => path.basename(p).toLowerCase() !== 'config.json');
 
-	console.log(`[readMonoCommands] Found JSON files:`, jsonFiles);
 	const commands: MonoCommand[] = [];
 	for (const file of jsonFiles) {
 		try {
-			console.log(`[readMonoCommands] Reading command file:`, file);
 			const j = await readJson<any>(file);
 			commands.push({
 				name: commandNameFromFile(file),
 				file,
 				json: j,
 			});
-			console.log(
-				`[readMonoCommands] Successfully loaded command:`,
-				commandNameFromFile(file)
-			);
 		} catch (err) {
 			console.error(
 				`[readMonoCommands] Failed to load command file:`,
@@ -246,10 +194,7 @@ async function readMonoCommands(): Promise<MonoCommand[]> {
 	}
 
 	commands.sort((a, b) => a.name.localeCompare(b.name));
-	console.log(
-		`[readMonoCommands] Final sorted commands:`,
-		commands.map((c) => c.name)
-	);
+
 	return commands;
 }
 
@@ -601,12 +546,10 @@ async function main(): Promise<void> {
 	const monoCommands = await readMonoCommands();
 
 	const pkgDirs = await findWorkspacePackageDirs(REPO_ROOT, workspacePatterns);
-	console.log(`[main] Package directories found:`, pkgDirs);
 	const packages: PackageInfo[] = [];
 	for (const dir of pkgDirs) {
 		try {
 			const pkgPath = path.join(dir, 'package.json');
-			console.log(`[main] Reading package.json:`, pkgPath);
 			const pj = await readJson<any>(pkgPath);
 			packages.push({
 				name:
@@ -616,7 +559,6 @@ async function main(): Promise<void> {
 				dir,
 				scripts: pj.scripts || {},
 			});
-			console.log(`[main] Loaded package:`, pj.name || dir);
 		} catch (err) {
 			console.error(`[main] Failed to load package.json for:`, dir, err);
 			// skip
@@ -625,7 +567,7 @@ async function main(): Promise<void> {
 
 	const parts: string[] = [];
 	parts.push(`# ⚙️ Command Line Reference
-		
+
 > Generated by \`scripts/generate-readme.mjs\`.
 > Update \`.mono/config.json\`, \`.mono/*.json\`, and workspace package scripts to change this output.
 
