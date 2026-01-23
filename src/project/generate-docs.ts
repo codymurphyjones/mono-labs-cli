@@ -56,6 +56,10 @@ export async function generateDocsIndex({
 		const rawTitle = match[1].trim();
 		const relativeLink = `./${entry.name}`;
 
+		links.push('\n');
+		links.push('---');
+		links.push('\n');
+
 		/**
 		 * Detect leading non-alphanumeric characters (emoji / symbols).
 		 * This matches one or more Unicode characters that are NOT letters or numbers.
