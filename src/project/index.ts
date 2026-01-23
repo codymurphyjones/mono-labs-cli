@@ -73,7 +73,6 @@ type DefaultAppConfig = {
 	appName?: string;
 	easProjectId?: string;
 	appScheme?: string;
-	regions?: string[];
 };
 
 type DefaultDeployConfig = {
@@ -81,8 +80,8 @@ type DefaultDeployConfig = {
 	webSubdomain?: string;
 	apiSubdomain?: string;
 	defaultKeyPair?: string;
-	regions?: string[];
-	ec2User?: string;
+	regions: string[];
+	ec2User: string;
 };
 
 const requiredSystemDefaults = {
