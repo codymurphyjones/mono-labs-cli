@@ -64,9 +64,9 @@ export async function generateDocsIndex({
 
 		if (leadingSymbolMatch) {
 			const [, symbol, title] = leadingSymbolMatch;
-			links.push(`- ${symbol} [${title}](${relativeLink})`);
+			links.push(`- ${symbol.trim()} [${title.trim()}](${relativeLink})`);
 		} else {
-			links.push(`- [${rawTitle}](${relativeLink})`);
+			links.push(`- [${rawTitle.trim()}](${relativeLink})`);
 		}
 	}
 
