@@ -1,31 +1,14 @@
-// scripts/generate-readme.ts
+// scripts/generate-readme.mjs
 // Node >= 18 recommended
-
-import { promises as fs } from 'node:fs';
-import { Dirent } from 'node:fs';
+import { promises as fs, Dirent } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import { generateDocsIndex } from './generate-docs.js';
 
-/* -------------------------------------------------------------------------- */
-/*                               Path helpers                                 */
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------ */
+/* Types                                                              */
+/* ------------------------------------------------------------------ */
 
-// Always use the working directory as the root for all file actions
-const REPO_ROOT = path.resolve(process.cwd());
-const MONO_DIR = path.join(REPO_ROOT, '.mono');
-const ROOT_PKG_JSON = path.join(REPO_ROOT, 'package.json');
-const OUTPUT_PATH = path.join(REPO_ROOT, 'docs');
-const OUTPUT_README = path.join(OUTPUT_PATH, 'command-line.md');
-
-/* -------------------------------------------------------------------------- */
-/*                                   Types                                    */
-/* -------------------------------------------------------------------------- */
-
-type JsonObject = Record<string, unknown>;
-
-interface MonoConfig {
+type MonoConfig = {
 	path: string;
 	config: {
 		envMap?: string[];
@@ -35,21 +18,33 @@ interface MonoConfig {
 			preactions?: string[];
 		};
 	};
-}
+};
 
-interface MonoCommand {
+type MonoCommand = {
 	name: string;
 	file: string;
-	json: JsonObject;
-}
+	json: {
+		description?: string;
+		argument?: {
+			type?: string;
+			description?: string;
+			default?: unknown;
+			required?: boolean;
+		};
+		options?: Record<string, unknown>;
+		environments?: Record<string, Record<string, string>>;
+		preactions?: string[];
+		actions?: string[];
+	};
+};
 
-interface PackageInfo {
+type PackageInfo = {
 	name: string;
 	dir: string;
 	scripts: Record<string, string>;
-}
+};
 
-interface OptionSchema {
+type OptionSchema = {
 	key: string;
 	kind: 'boolean' | 'value';
 	type: string;
@@ -58,16 +53,24 @@ interface OptionSchema {
 	default: unknown;
 	allowed: string[] | null;
 	allowAll: boolean;
-}
+};
 
-/* -------------------------------------------------------------------------- */
-/*                                   Utils                                    */
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------ */
+/* Constants                                                          */
+/* ------------------------------------------------------------------ */
+
+const REPO_ROOT = path.resolve(process.cwd());
+const MONO_DIR = path.join(REPO_ROOT, '.mono');
+const ROOT_PKG_JSON = path.join(REPO_ROOT, 'package.json');
+const OUTPUT_PATH = path.join(REPO_ROOT, 'docs');
+const OUTPUT_README = path.join(OUTPUT_PATH, 'command-line.md');
+
+/* ------------------------------------------------------------------ */
+/* Utils                                                              */
+/* ------------------------------------------------------------------ */
 
 async function ensureParentDir(filePath: string): Promise<void> {
-	// Always resolve parent dir relative to working directory
-	const dir = path.resolve(process.cwd(), path.dirname(filePath));
-	await fs.mkdir(dir, { recursive: true });
+	await fs.mkdir(path.dirname(filePath), { recursive: true });
 }
 
 async function exists(p: string): Promise<boolean> {
@@ -79,25 +82,20 @@ async function exists(p: string): Promise<boolean> {
 	}
 }
 
-function isObject(v: unknown): v is JsonObject {
-	return v !== null && typeof v === 'object' && !Array.isArray(v);
+function isObject(v: unknown): v is Record<string, unknown> {
+	return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
 function toPosix(p: string): string {
 	return p.split(path.sep).join('/');
 }
 
-async function readJson<T = unknown>(filePath: string): Promise<T> {
-	// Always resolve filePath relative to working directory
-	const absPath = path.resolve(process.cwd(), filePath);
-	const raw = await fs.readFile(absPath, 'utf8');
-	return JSON.parse(raw) as T;
+async function readJson<T>(filePath: string): Promise<T> {
+	return JSON.parse(await fs.readFile(filePath, 'utf8')) as T;
 }
 
 async function listDir(dir: string): Promise<Dirent[]> {
-	// Always resolve dir relative to working directory
-	const absDir = path.resolve(process.cwd(), dir);
-	return fs.readdir(absDir, { withFileTypes: true });
+	return fs.readdir(dir, { withFileTypes: true });
 }
 
 function normalizeWorkspacePatterns(workspacesField: unknown): string[] {
@@ -111,121 +109,85 @@ function normalizeWorkspacePatterns(workspacesField: unknown): string[] {
 	return [];
 }
 
-function mdEscapeInline(value: unknown): string {
-	return String(value ?? '').replaceAll('`', '\\`');
+function mdEscapeInline(s: string): string {
+	return s.replaceAll('`', '\\`');
 }
 
 function indentLines(s: string, spaces = 2): string {
 	const pad = ' '.repeat(spaces);
 	return s
 		.split('\n')
-		.map((line) => pad + line)
+		.map((l) => pad + l)
 		.join('\n');
 }
 
-/* -------------------------------------------------------------------------- */
-/*                      Workspace glob pattern expansion                       */
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------ */
+/* Workspace globbing                                                  */
+/* ------------------------------------------------------------------ */
 
 function matchSegment(patternSeg: string, name: string): boolean {
 	if (patternSeg === '*') return true;
 	if (!patternSeg.includes('*')) return patternSeg === name;
-
 	const escaped = patternSeg.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
-	const regex = new RegExp(`^${escaped.replaceAll('*', '.*')}$`);
-	return regex.test(name);
+	return new RegExp(`^${escaped.replaceAll('*', '.*')}$`).test(name);
 }
 
 async function expandWorkspacePattern(
 	root: string,
 	pattern: string
 ): Promise<string[]> {
-	const segments = toPosix(pattern).split('/').filter(Boolean);
+	const segs = toPosix(pattern).split('/').filter(Boolean);
 
-	async function expandFrom(dir: string, index: number): Promise<string[]> {
-		// Always resolve dir relative to working directory
-		const absDir = path.resolve(process.cwd(), dir);
-		if (index >= segments.length) return [absDir];
-
-		const seg = segments[index];
-
-		if (seg === '**') {
-			const results: string[] = [];
-			results.push(...(await expandFrom(absDir, index + 1)));
-
-			const entries = await fs
-				.readdir(absDir, { withFileTypes: true })
-				.catch(() => []);
-
-			for (const entry of entries) {
-				if (!entry.isDirectory()) continue;
-				results.push(
-					...(await expandFrom(path.join(absDir, entry.name), index))
-				);
-			}
-			return results;
-		}
+	async function expandFrom(dir: string, idx: number): Promise<string[]> {
+		if (idx >= segs.length) return [dir];
+		const seg = segs[idx];
 
 		const entries = await fs
-			.readdir(absDir, { withFileTypes: true })
+			.readdir(dir, { withFileTypes: true })
 			.catch(() => []);
 
-		const results: string[] = [];
-		for (const entry of entries) {
-			if (!entry.isDirectory()) continue;
-			if (!matchSegment(seg, entry.name)) continue;
-
-			results.push(
-				...(await expandFrom(path.join(absDir, entry.name), index + 1))
-			);
+		if (seg === '**') {
+			return [
+				...(await expandFrom(dir, idx + 1)),
+				...entries
+					.filter((e) => e.isDirectory())
+					.flatMap((e) => expandFrom(path.join(dir, e.name), idx)),
+			];
 		}
 
-		return results;
+		return entries
+			.filter((e) => e.isDirectory() && matchSegment(seg, e.name))
+			.flatMap((e) => expandFrom(path.join(dir, e.name), idx + 1));
 	}
 
 	const dirs = await expandFrom(root, 0);
-	const pkgDirs: string[] = [];
+	const pkgDirs = await Promise.all(
+		dirs.map(async (d) =>
+			(await exists(path.join(d, 'package.json'))) ? d : null
+		)
+	);
 
-	for (const d of dirs) {
-		if (await exists(path.join(d, 'package.json'))) {
-			pkgDirs.push(d);
-		}
-	}
-
-	return Array.from(new Set(pkgDirs));
+	return [...new Set(pkgDirs.filter(Boolean) as string[])];
 }
 
 async function findWorkspacePackageDirs(
 	repoRoot: string,
-	patterns: string[]
+	workspacePatterns: string[]
 ): Promise<string[]> {
-	const dirs: string[] = [];
-
-	for (const pat of patterns) {
-		dirs.push(...(await expandWorkspacePattern(repoRoot, pat)));
-	}
-
-	return Array.from(new Set(dirs));
+	const dirs = await Promise.all(
+		workspacePatterns.map((p) => expandWorkspacePattern(repoRoot, p))
+	);
+	return [...new Set(dirs.flat())];
 }
 
-/* -------------------------------------------------------------------------- */
-/*                             .mono configuration                             */
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------ */
+/* Mono config + commands                                              */
+/* ------------------------------------------------------------------ */
 
 async function readMonoConfig(): Promise<MonoConfig | null> {
-	// Always resolve configPath relative to working directory
-	const configPath = path.resolve(
-		process.cwd(),
-		path.join(MONO_DIR, 'config.json')
-	);
+	const configPath = path.join(MONO_DIR, 'config.json');
 	if (!(await exists(configPath))) return null;
-
-	try {
-		const config = await readJson<MonoConfig['config']>(configPath);
-		return { path: configPath, config };
-	} catch {
-		return null;
-	}
+	return { path: configPath, config: await readJson(configPath) };
 }
 
 function commandNameFromFile(filePath: string): string {
@@ -233,47 +195,38 @@ function commandNameFromFile(filePath: string): string {
 }
 
 async function readMonoCommands(): Promise<MonoCommand[]> {
-	// Always resolve MONO_DIR relative to working directory
-	const monoDirAbs = path.resolve(process.cwd(), MONO_DIR);
-	if (!(await exists(monoDirAbs))) return [];
+	if (!(await exists(MONO_DIR))) return [];
 
-	const entries = await listDir(monoDirAbs);
+	const entries = await listDir(MONO_DIR);
 
-	const jsonFiles = entries
-		.filter((e) => e.isFile() && e.name.endsWith('.json'))
-		.map((e) => path.join(monoDirAbs, e.name))
-		.filter((p) => path.basename(p) !== 'config.json');
-
-	const commands: MonoCommand[] = [];
-
-	for (const file of jsonFiles) {
-		try {
-			const json = await readJson<JsonObject>(file);
-			commands.push({
-				name: commandNameFromFile(file),
-				file,
-				json,
-			});
-		} catch {
-			/* ignore invalid JSON */
-		}
-	}
-
-	return commands.sort((a, b) => a.name.localeCompare(b.name));
+	return Promise.all(
+		entries
+			.filter(
+				(e) =>
+					e.isFile() && e.name.endsWith('.json') && e.name !== 'config.json'
+			)
+			.map(async (e) => {
+				const file = path.join(MONO_DIR, e.name);
+				return {
+					name: commandNameFromFile(file),
+					file,
+					json: await readJson(file),
+				};
+			})
+	).then((cmds) => cmds.sort((a, b) => a.name.localeCompare(b.name)));
 }
 
-/* -------------------------------------------------------------------------- */
-/*                          Options schema parsing                             */
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------ */
+/* Option parsing                                                      */
+/* ------------------------------------------------------------------ */
 
 function parseOptionsSchema(optionsObj: unknown): OptionSchema[] {
 	if (!isObject(optionsObj)) return [];
 
-	const entries: OptionSchema[] = Object.entries(optionsObj).map(
-		([key, raw]) => {
+	return Object.entries(optionsObj)
+		.map(([key, raw]) => {
 			const o = isObject(raw) ? raw : {};
-			const hasType = typeof o.type === 'string' && o.type.length > 0;
-
+			const hasType = typeof o.type === 'string';
 			return {
 				key,
 				kind: hasType ? 'value' : 'boolean',
@@ -281,101 +234,59 @@ function parseOptionsSchema(optionsObj: unknown): OptionSchema[] {
 				description: typeof o.description === 'string' ? o.description : '',
 				shortcut: typeof o.shortcut === 'string' ? o.shortcut : '',
 				default: o.default,
-				allowed: Array.isArray(o.options) ? (o.options as string[]) : null,
+				allowed:
+					Array.isArray(o.options) ?
+						o.options.filter((x): x is string => typeof x === 'string')
+					:	null,
 				allowAll: o.allowAll === true,
 			};
-		}
-	);
-
-	return entries.sort((a, b) => a.key.localeCompare(b.key));
+		})
+		.sort((a, b) => a.key.localeCompare(b.key));
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                 Formatting                                 */
-/* -------------------------------------------------------------------------- */
-
-function buildUsageExample(
-	commandName: string,
-	cmdJson: JsonObject,
-	options: OptionSchema[]
-): string {
-	const arg = cmdJson.argument;
-	const hasArg = isObject(arg);
-
-	const parts: string[] = [`yarn mono ${commandName}`];
-
-	if (hasArg) parts.push(`<${commandName}-arg>`);
-
-	const valueOpts = options.filter((o) => o.kind === 'value');
-	const boolOpts = options.filter((o) => o.kind === 'boolean');
-
-	for (const o of valueOpts.slice(0, 2)) {
-		const value =
-			o.default !== undefined ?
-				String(o.default)
-			:	(o.allowed?.[0] ?? '<value>');
-		parts.push(`--${o.key} ${value}`);
-	}
-
-	if (boolOpts[0]) {
-		parts.push(`--${boolOpts[0].key}`);
-	}
-
-	return parts.join(' ');
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                    Main                                    */
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------ */
+/* Main                                                               */
+/* ------------------------------------------------------------------ */
 
 async function main(): Promise<void> {
-	// Always resolve all paths relative to working directory
 	if (!(await exists(ROOT_PKG_JSON))) {
-		throw new Error(`Missing ${ROOT_PKG_JSON}`);
+		throw new Error(`Missing: ${ROOT_PKG_JSON}`);
 	}
 
 	await ensureParentDir(OUTPUT_PATH);
 
-	const rootPkg = await readJson<{ workspaces?: unknown }>(ROOT_PKG_JSON);
+	const rootPkg = await readJson<any>(ROOT_PKG_JSON);
 	const workspacePatterns = normalizeWorkspacePatterns(rootPkg.workspaces);
 
 	const monoConfig = await readMonoConfig();
 	const monoCommands = await readMonoCommands();
-
 	const pkgDirs = await findWorkspacePackageDirs(REPO_ROOT, workspacePatterns);
 
-	const packages: PackageInfo[] = [];
-
-	for (const dir of pkgDirs) {
-		try {
-			const pkg = await readJson<{
-				name?: string;
-				scripts?: Record<string, string>;
-			}>(path.join(dir, 'package.json'));
-
-			packages.push({
+	const packages: PackageInfo[] = await Promise.all(
+		pkgDirs.map(async (dir) => {
+			const pj = await readJson<any>(path.join(dir, 'package.json'));
+			return {
 				name:
-					pkg.name ??
-					toPosix(path.relative(REPO_ROOT, dir)) ??
+					pj.name ||
+					toPosix(path.relative(REPO_ROOT, dir)) ||
 					path.basename(dir),
 				dir,
-				scripts: pkg.scripts ?? {},
-			});
-		} catch {
-			/* ignore */
-		}
-	}
+				scripts: pj.scripts ?? {},
+			};
+		})
+	);
 
 	const parts: string[] = [];
-
 	parts.push(`# Mono Command-Line Reference
 
-> Generated by \`scripts/generate-readme.ts\`.
+> Generated by \`scripts/generate-readme.mjs\`.
+> Update \`.mono/config.json\`, \`.mono/*.json\`, and workspace package scripts to change this output.
 
 `);
 
-	// Reuse your existing formatters here
-	// (unchanged logic, now fully typed)
+	// existing renderers unchanged
+	// ...
+	// (your formatMonoConfigSection / formatMonoCommandsSection calls here)
 
 	const docsIndex = await generateDocsIndex({
 		docsDir: path.join(REPO_ROOT, 'docs'),
@@ -384,7 +295,6 @@ async function main(): Promise<void> {
 
 	parts.push(docsIndex);
 
-	await ensureParentDir(OUTPUT_README);
 	await fs.writeFile(OUTPUT_README, parts.join('\n'), 'utf8');
 
 	console.log(`Generated: ${OUTPUT_README}`);
@@ -394,6 +304,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-	console.error(err instanceof Error ? err.stack : err);
-	process.exit(1);
+	console.error(err);
+	process.exitCode = 1;
 });
