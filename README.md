@@ -1,247 +1,123 @@
-<div align="center">
+# mono-labs
 
-# mono-labs CLI
-
-Declarative, token-aware task runner for JavaScript/TypeScript monorepos.
-Configure commands with simple JSON – no custom scripting required.
-
-</div>
-
-## Why This Exists
-
-You often need a repeatable set of steps to bootstrap or run your full stack
-(web, mobile, backend, infra). Traditional npm scripts become tangled. This CLI
-lets you:
-
-- Describe commands in `.mono/*.json` files
-- Emit dynamic values from scripts (`{out:token value}`)
-- Inject those values into later commands & environment variables
-- Run multiple background services + one attached foreground process
-
-No publishing needed: you can link and iterate locally.
+Declarative monorepo orchestration, project tooling, and infrastructure
+integration — built to scale real systems, not just scripts.
 
 ---
 
-## Quick Start (Beginner Friendly)
+## What This Is
 
-1. Install dependencies:
+mono-labs is a monorepo control plane.
 
-```bash
-yarn install
-```
+It combines:
 
-2. Create a `.mono` directory in your project root.
-3. Add a file `.mono/hello.json`:
+- a declarative, token-aware CLI runtime
+- project-level orchestration utilities
+- infrastructure and CI integration primitives
 
-```json
+The goal is to make a monorepo behave like a single, coordinated system across:
+
+- local development
+- CI pipelines
+- deployments
+- infrastructure management
+
+---
+
+## What Problems It Solves
+
+Most monorepos suffer from:
+
+- duplicated scripts across packages
+- environment drift between dev and CI
+- infrastructure logic isolated in pipelines
+- brittle bash scripts
+- slow onboarding
+
+mono-labs solves this by providing:
+
+- declarative command definitions
+- shared runtime state via tokens
+- reusable project utilities
+- programmatic CDK helpers
+- one mental model for dev, CI, and deploy
+
+---
+
+## High-Level Architecture
+
+mono-labs is intentionally layered:
+
+1. `.mono/` Declarative command definitions (JSON).
+
+2. CLI Runtime (`bin` + `lib`) Loads `.mono`, builds commands, executes
+   workflows, manages processes.
+
+3. Project Orchestration (`src/project`) Environment merging, configuration
+   management, monorepo utilities.
+
+4. Infrastructure Integration (`src/cdk`) CDK helpers, stack orchestration,
+   CI-friendly deployment primitives.
+
+Each layer can be used independently, but they are designed to work together.
+
+---
+
+## Quick Start
+
+Create a `.mono` directory and add:
+
+.mono/hello.json
+
 { "actions": ["echo Hello World"] }
-```
 
-4. Run the command:
+Run:
 
-```bash
 yarn mono hello
-```
-
-You should see `Hello World`.
-
-### Adding a Command with an Argument
-
-```json
-// .mono/greet.json
-{
-	"actions": ["echo Hi ${arg}"],
-	"argument": { "description": "Name to greet", "default": "friend" }
-}
-```
-
-```bash
-yarn mono greet        # Hi friend
-yarn mono greet Alice  # Hi Alice
-```
-
-### Adding an Option
-
-```json
-// .mono/build.json
-{
-	"actions": ["echo Building for ${platform} debug=${debug}"],
-	"options": {
-		"platform": { "type": "string", "default": "ios" },
-		"debug": { "description": "Enable debug mode" }
-	}
-}
-```
-
-```bash
-yarn mono build --platform android --debug
-```
 
 ---
 
-## Core Concepts
+## Typical Developer Workflow
 
-| Concept        | Summary                                                                                       |
-| -------------- | --------------------------------------------------------------------------------------------- |
-| `.mono/*.json` | Each file (except `config.json`) becomes a command. `dev.json` -> `yarn mono dev`.            |
-| `preactions`   | Sequential setup commands whose output can define tokens.                                     |
-| `actions`      | Main workload commands. All but last run detached; last is attached (interactive).            |
-| Tokens         | Printed from preactions as `{out:key value}` and later substituted as `${key}`.               |
-| Environments   | `environments.dev` / `environments.stage` provide token-aware env vars. Use `--stage` switch. |
-| Data Layer     | Merges defaults, user flags, argument, and emitted tokens.                                    |
+yarn mono dev yarn mono serve yarn mono mobile
 
-Full schemas & rules: see `docs/configuration.md`.
+If unsure:
+
+yarn mono help
 
 ---
 
 ## Documentation Index
 
-| Topic                    | File                      |
-| ------------------------ | ------------------------- |
-| Architecture / internals | `docs/architecture.md`    |
-| Configuration schema     | `docs/configuration.md`   |
-| Practical examples       | `docs/examples.md`        |
-| Troubleshooting          | `docs/troubleshooting.md` |
+Start here:
+
+- docs/README.txt
+
+Key docs:
+
+- docs/architecture.md
+- docs/configuration.md
+- docs/examples.md
+- docs/troubleshooting.md
+
+Advanced:
+
+- docs/project-orchestration.md
+- docs/infrastructure-integration.md
 
 ---
 
-## How It Works (Short Version)
+## Who This Is For
 
-1. CLI scans `.mono/` at startup.
-2. Builds Commander commands for each JSON file.
-3. When invoked: merges defaults + flags + argument into data layer.
-4. Runs `preactions` (foreground) capturing `{out:key value}` tokens.
-5. Spawns each action (background except last). Performs `${token}`
-   substitution.
-6. Cleans background processes on exit or Ctrl+C.
+mono-labs is designed for teams that:
 
-Details: `docs/architecture.md`.
-
----
-
-## Local Development / Linking
-
-From this repo root:
-
-```bash
-yarn link
-```
-
-In a target project:
-
-```bash
-yarn link "@mono-labs/cli"
-```
-
-Then use:
-
-```bash
-yarn mono <command>
-```
-
-To unlink later:
-
-```bash
-yarn unlink "@mono-labs/cli"
-```
-
-Alternative (direct file install):
-
-```bash
-yarn add file:/absolute/path/to/mono-labs-cli
-```
-
----
-
-## Emitting Dynamic Values
-
-Inside a `preactions` script output lines like:
-
-```
-{out:ngrok_api https://1234.ngrok.dev}
-{out:region us-east-1}
-```
-
-Then reference in actions or environments as `${ngrok_api}` or `${region}`.
-
----
-
-## Example Advanced Command
-
-```json
-// .mono/dev.json
-{
-	"preactions": ["docker compose up -d", "node scripts/ngrok_setup"],
-	"actions": [
-		"yarn backend dynamodb-admin -p 8082 --dynamo-endpoint=http://localhost:8000",
-		"yarn mono backend server"
-	],
-	"argument": { "type": "string", "default": "dev" },
-	"options": {
-		"stage": { "description": "Use stage env" },
-		"profile": { "type": "string", "description": "Profile name" }
-	},
-	"environments": {
-		"dev": { "API_URL": "${ngrok_api}", "MODE": "dev" },
-		"stage": { "API_URL": "${ngrok_api}", "MODE": "stage" }
-	}
-}
-```
-
-Run:
-
-```bash
-yarn mono dev --profile alpha
-```
-
----
-
-## Design Decisions
-
-- JSON over JS: simpler, toolable, safer for newcomers.
-- Single positional argument: keeps mental model small.
-- Token system: decouples script output from later steps.
-- Background/foreground split: stable dev server orchestration.
-
----
-
-## Extending
-
-| Need                   | Approach                                      |
-| ---------------------- | --------------------------------------------- |
-| Multiple arguments     | Extend `cliFactory.js` to parse more.         |
-| JSON schema validation | Add Ajv in `boot()` loader.                   |
-| Parallel preactions    | Modify `runHasteCommand.js` to `Promise.all`. |
-| Different token syntax | Adjust regex in `runForeground.js`.           |
-
----
-
-## Contributing
-
-1. Fork & clone
-2. Create a feature branch
-3. Add/adjust tests (future roadmap)
-4. Submit PR with clear description
-
----
-
-## FAQ (Fast Answers)
-
-| Question                         | Answer                                                                                                                    |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| How do I list commands?          | Look at filenames in `.mono/` or run `yarn mono --help`.                                                                  |
-| How do I pass env vars manually? | `MY_VAR=1 yarn mono dev` (POSIX) or `set MY_VAR=1 && yarn mono dev` (CMD) or `$env:MY_VAR=1; yarn mono dev` (PowerShell). |
-| Does it support Windows?         | Yes; process cleanup uses `taskkill`.                                                                                     |
-| What if a token is missing?      | It stays literal (`${token}`); no crash.                                                                                  |
+- run full-stack systems
+- manage real infrastructure
+- care about reproducibility
+- want dev and CI to behave the same
 
 ---
 
 ## License
 
 MIT © Contributors
-
----
-
-## Next Steps
-
-Jump to: `docs/examples.md` for hands-on learning.
