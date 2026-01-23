@@ -30,7 +30,8 @@ export async function generateDocsIndex({
 	docsDir,
 	excludeFile,
 }: GenerateDocsIndexOptions): Promise<string> {
-	const dirPath = path.resolve(docsDir);
+	// Always resolve docsDir relative to the working directory
+	const dirPath = path.resolve(process.cwd(), docsDir);
 	const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
 	const links: string[] = [];

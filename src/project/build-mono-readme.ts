@@ -12,9 +12,7 @@ import { generateDocsIndex } from './generate-docs.js';
 /*                               Path helpers                                 */
 /* -------------------------------------------------------------------------- */
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+// Always use the working directory as the root for all file actions
 const REPO_ROOT = path.resolve(process.cwd());
 const MONO_DIR = path.join(REPO_ROOT, '.mono');
 const ROOT_PKG_JSON = path.join(REPO_ROOT, 'package.json');
@@ -67,7 +65,8 @@ interface OptionSchema {
 /* -------------------------------------------------------------------------- */
 
 async function ensureParentDir(filePath: string): Promise<void> {
-	const dir = path.dirname(filePath);
+	// Always resolve parent dir relative to working directory
+	const dir = path.resolve(process.cwd(), path.dirname(filePath));
 	await fs.mkdir(dir, { recursive: true });
 }
 
@@ -89,12 +88,16 @@ function toPosix(p: string): string {
 }
 
 async function readJson<T = unknown>(filePath: string): Promise<T> {
-	const raw = await fs.readFile(filePath, 'utf8');
+	// Always resolve filePath relative to working directory
+	const absPath = path.resolve(process.cwd(), filePath);
+	const raw = await fs.readFile(absPath, 'utf8');
 	return JSON.parse(raw) as T;
 }
 
 async function listDir(dir: string): Promise<Dirent[]> {
-	return fs.readdir(dir, { withFileTypes: true });
+	// Always resolve dir relative to working directory
+	const absDir = path.resolve(process.cwd(), dir);
+	return fs.readdir(absDir, { withFileTypes: true });
 }
 
 function normalizeWorkspacePatterns(workspacesField: unknown): string[] {
@@ -140,27 +143,31 @@ async function expandWorkspacePattern(
 	const segments = toPosix(pattern).split('/').filter(Boolean);
 
 	async function expandFrom(dir: string, index: number): Promise<string[]> {
-		if (index >= segments.length) return [dir];
+		// Always resolve dir relative to working directory
+		const absDir = path.resolve(process.cwd(), dir);
+		if (index >= segments.length) return [absDir];
 
 		const seg = segments[index];
 
 		if (seg === '**') {
 			const results: string[] = [];
-			results.push(...(await expandFrom(dir, index + 1)));
+			results.push(...(await expandFrom(absDir, index + 1)));
 
 			const entries = await fs
-				.readdir(dir, { withFileTypes: true })
+				.readdir(absDir, { withFileTypes: true })
 				.catch(() => []);
 
 			for (const entry of entries) {
 				if (!entry.isDirectory()) continue;
-				results.push(...(await expandFrom(path.join(dir, entry.name), index)));
+				results.push(
+					...(await expandFrom(path.join(absDir, entry.name), index))
+				);
 			}
 			return results;
 		}
 
 		const entries = await fs
-			.readdir(dir, { withFileTypes: true })
+			.readdir(absDir, { withFileTypes: true })
 			.catch(() => []);
 
 		const results: string[] = [];
@@ -169,7 +176,7 @@ async function expandWorkspacePattern(
 			if (!matchSegment(seg, entry.name)) continue;
 
 			results.push(
-				...(await expandFrom(path.join(dir, entry.name), index + 1))
+				...(await expandFrom(path.join(absDir, entry.name), index + 1))
 			);
 		}
 
@@ -206,7 +213,11 @@ async function findWorkspacePackageDirs(
 /* -------------------------------------------------------------------------- */
 
 async function readMonoConfig(): Promise<MonoConfig | null> {
-	const configPath = path.join(MONO_DIR, 'config.json');
+	// Always resolve configPath relative to working directory
+	const configPath = path.resolve(
+		process.cwd(),
+		path.join(MONO_DIR, 'config.json')
+	);
 	if (!(await exists(configPath))) return null;
 
 	try {
@@ -222,13 +233,15 @@ function commandNameFromFile(filePath: string): string {
 }
 
 async function readMonoCommands(): Promise<MonoCommand[]> {
-	if (!(await exists(MONO_DIR))) return [];
+	// Always resolve MONO_DIR relative to working directory
+	const monoDirAbs = path.resolve(process.cwd(), MONO_DIR);
+	if (!(await exists(monoDirAbs))) return [];
 
-	const entries = await listDir(MONO_DIR);
+	const entries = await listDir(monoDirAbs);
 
 	const jsonFiles = entries
 		.filter((e) => e.isFile() && e.name.endsWith('.json'))
-		.map((e) => path.join(MONO_DIR, e.name))
+		.map((e) => path.join(monoDirAbs, e.name))
 		.filter((p) => path.basename(p) !== 'config.json');
 
 	const commands: MonoCommand[] = [];
@@ -316,6 +329,7 @@ function buildUsageExample(
 /* -------------------------------------------------------------------------- */
 
 async function main(): Promise<void> {
+	// Always resolve all paths relative to working directory
 	if (!(await exists(ROOT_PKG_JSON))) {
 		throw new Error(`Missing ${ROOT_PKG_JSON}`);
 	}

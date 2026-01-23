@@ -22,14 +22,17 @@ interface PackageInfo {
 }
 
 // ----------------- config -----------------
+// Always use the working directory as the root for all file actions
 const REPO_ROOT = path.resolve(process.cwd());
 const ROOT_PKG_JSON = path.join(REPO_ROOT, 'package.json');
 const OUTPUT_PATH = path.join(REPO_ROOT, 'docs', 'workspaces.md');
 
 // ----------------- helpers -----------------
 async function exists(p: string): Promise<boolean> {
+	// Always resolve path relative to working directory
+	const absPath = path.resolve(process.cwd(), p);
 	try {
-		await fs.access(p);
+		await fs.access(absPath);
 		return true;
 	} catch {
 		return false;
@@ -58,7 +61,9 @@ function slugifyForGithubAnchor(title: string): string {
 }
 
 async function readJson<T = any>(filePath: string): Promise<T> {
-	const raw = await fs.readFile(filePath, 'utf8');
+	// Always resolve filePath relative to working directory
+	const absPath = path.resolve(process.cwd(), filePath);
+	const raw = await fs.readFile(absPath, 'utf8');
 	return JSON.parse(raw);
 }
 
@@ -89,33 +94,37 @@ async function expandWorkspacePattern(
 	const segs = toPosix(pattern).split('/').filter(Boolean);
 
 	async function expandFrom(dir: string, segIndex: number): Promise<string[]> {
-		if (segIndex >= segs.length) return [dir];
+		// Always resolve dir relative to working directory
+		const absDir = path.resolve(process.cwd(), dir);
+		if (segIndex >= segs.length) return [absDir];
 
 		const seg = segs[segIndex];
 
 		if (seg === '**') {
 			const results: string[] = [];
-			results.push(...(await expandFrom(dir, segIndex + 1)));
+			results.push(...(await expandFrom(absDir, segIndex + 1)));
 
 			const entries = await fs
-				.readdir(dir, { withFileTypes: true })
+				.readdir(absDir, { withFileTypes: true })
 				.catch(() => []);
 			for (const e of entries) {
 				if (e.isDirectory()) {
-					results.push(...(await expandFrom(path.join(dir, e.name), segIndex)));
+					results.push(
+						...(await expandFrom(path.join(absDir, e.name), segIndex))
+					);
 				}
 			}
 			return results;
 		}
 
 		const entries = await fs
-			.readdir(dir, { withFileTypes: true })
+			.readdir(absDir, { withFileTypes: true })
 			.catch(() => []);
 		const results: string[] = [];
 		for (const e of entries) {
 			if (e.isDirectory() && matchSegment(seg, e.name)) {
 				results.push(
-					...(await expandFrom(path.join(dir, e.name), segIndex + 1))
+					...(await expandFrom(path.join(absDir, e.name), segIndex + 1))
 				);
 			}
 		}
@@ -155,11 +164,13 @@ async function findPackageJsonFilesRecursive(
 	const found: string[] = [];
 
 	async function walk(dir: string): Promise<void> {
+		// Always resolve dir relative to working directory
+		const absDir = path.resolve(process.cwd(), dir);
 		const entries = await fs
-			.readdir(dir, { withFileTypes: true })
+			.readdir(absDir, { withFileTypes: true })
 			.catch(() => []);
 		for (const e of entries) {
-			const full = path.join(dir, e.name);
+			const full = path.join(absDir, e.name);
 			if (e.isDirectory()) {
 				if (!SKIP_DIRS.has(e.name)) await walk(full);
 			} else if (e.isFile() && e.name === 'package.json') {
@@ -312,11 +323,14 @@ function formatPackages(packages: PackageInfo[]): string[] {
 }
 
 async function ensureParentDir(filePath: string): Promise<void> {
-	await fs.mkdir(path.dirname(filePath), { recursive: true });
+	// Always resolve parent dir relative to working directory
+	const dir = path.resolve(process.cwd(), path.dirname(filePath));
+	await fs.mkdir(dir, { recursive: true });
 }
 
 // ----------------- main -----------------
 async function main(): Promise<void> {
+	// Always resolve all paths relative to working directory
 	if (!(await exists(ROOT_PKG_JSON))) {
 		throw new Error('Root package.json not found');
 	}
