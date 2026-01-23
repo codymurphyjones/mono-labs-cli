@@ -1,12 +1,13 @@
 // scripts/generate-readme.mjs
 // Node >= 18 recommended
+
 import { promises as fs, Dirent } from 'node:fs';
 import path from 'node:path';
 import { generateDocsIndex } from './generate-docs.js';
 
-/* ------------------------------------------------------------------ */
-/* Types                                                              */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Types                                                                      */
+/* -------------------------------------------------------------------------- */
 
 type MonoConfig = {
 	path: string;
@@ -55,9 +56,9 @@ type OptionSchema = {
 	allowAll: boolean;
 };
 
-/* ------------------------------------------------------------------ */
-/* Constants                                                          */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Constants                                                                  */
+/* -------------------------------------------------------------------------- */
 
 const REPO_ROOT = path.resolve(process.cwd());
 const MONO_DIR = path.join(REPO_ROOT, '.mono');
@@ -65,9 +66,9 @@ const ROOT_PKG_JSON = path.join(REPO_ROOT, 'package.json');
 const OUTPUT_PATH = path.join(REPO_ROOT, 'docs');
 const OUTPUT_README = path.join(OUTPUT_PATH, 'command-line.md');
 
-/* ------------------------------------------------------------------ */
-/* Utils                                                              */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Utils                                                                      */
+/* -------------------------------------------------------------------------- */
 
 async function ensureParentDir(filePath: string): Promise<void> {
 	await fs.mkdir(path.dirname(filePath), { recursive: true });
@@ -121,9 +122,9 @@ function indentLines(s: string, spaces = 2): string {
 		.join('\n');
 }
 
-/* ------------------------------------------------------------------ */
-/* Workspace globbing                                                  */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Workspace globbing                                                         */
+/* -------------------------------------------------------------------------- */
 
 function matchSegment(patternSeg: string, name: string): boolean {
 	if (patternSeg === '*') return true;
@@ -140,54 +141,66 @@ async function expandWorkspacePattern(
 
 	async function expandFrom(dir: string, idx: number): Promise<string[]> {
 		if (idx >= segs.length) return [dir];
-		const seg = segs[idx];
 
 		const entries = await fs
 			.readdir(dir, { withFileTypes: true })
 			.catch(() => []);
 
+		const seg = segs[idx];
+
 		if (seg === '**') {
-			return [
-				...(await expandFrom(dir, idx + 1)),
-				...entries
+			const nested = await Promise.all(
+				entries
 					.filter((e) => e.isDirectory())
-					.flatMap((e) => expandFrom(path.join(dir, e.name), idx)),
-			];
+					.map((e) => expandFrom(path.join(dir, e.name), idx))
+			);
+
+			return [...(await expandFrom(dir, idx + 1)), ...nested.flat()];
 		}
 
-		return entries
-			.filter((e) => e.isDirectory() && matchSegment(seg, e.name))
-			.flatMap((e) => expandFrom(path.join(dir, e.name), idx + 1));
+		const nested = await Promise.all(
+			entries
+				.filter((e) => e.isDirectory() && matchSegment(seg, e.name))
+				.map((e) => expandFrom(path.join(dir, e.name), idx + 1))
+		);
+
+		return nested.flat();
 	}
 
 	const dirs = await expandFrom(root, 0);
-	const pkgDirs = await Promise.all(
-		dirs.map(async (d) =>
-			(await exists(path.join(d, 'package.json'))) ? d : null
-		)
-	);
 
-	return [...new Set(pkgDirs.filter(Boolean) as string[])];
+	const pkgDirs = (
+		await Promise.all(
+			dirs.map(async (d) =>
+				(await exists(path.join(d, 'package.json'))) ? d : null
+			)
+		)
+	).filter(Boolean) as string[];
+
+	return [...new Set(pkgDirs)];
 }
 
 async function findWorkspacePackageDirs(
 	repoRoot: string,
 	workspacePatterns: string[]
 ): Promise<string[]> {
-	const dirs = await Promise.all(
+	const resolved = await Promise.all(
 		workspacePatterns.map((p) => expandWorkspacePattern(repoRoot, p))
 	);
-	return [...new Set(dirs.flat())];
+	return [...new Set(resolved.flat())];
 }
 
-/* ------------------------------------------------------------------ */
-/* Mono config + commands                                              */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Mono config + commands                                                     */
+/* -------------------------------------------------------------------------- */
 
 async function readMonoConfig(): Promise<MonoConfig | null> {
 	const configPath = path.join(MONO_DIR, 'config.json');
 	if (!(await exists(configPath))) return null;
-	return { path: configPath, config: await readJson(configPath) };
+	return {
+		path: configPath,
+		config: await readJson<MonoConfig['config']>(configPath),
+	};
 }
 
 function commandNameFromFile(filePath: string): string {
@@ -199,7 +212,7 @@ async function readMonoCommands(): Promise<MonoCommand[]> {
 
 	const entries = await listDir(MONO_DIR);
 
-	return Promise.all(
+	const commands = await Promise.all(
 		entries
 			.filter(
 				(e) =>
@@ -207,18 +220,21 @@ async function readMonoCommands(): Promise<MonoCommand[]> {
 			)
 			.map(async (e) => {
 				const file = path.join(MONO_DIR, e.name);
+				const json = await readJson<MonoCommand['json']>(file);
 				return {
 					name: commandNameFromFile(file),
 					file,
-					json: await readJson(file),
+					json,
 				};
 			})
-	).then((cmds) => cmds.sort((a, b) => a.name.localeCompare(b.name)));
+	);
+
+	return commands.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/* ------------------------------------------------------------------ */
-/* Option parsing                                                      */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Options parsing                                                           */
+/* -------------------------------------------------------------------------- */
 
 function parseOptionsSchema(optionsObj: unknown): OptionSchema[] {
 	if (!isObject(optionsObj)) return [];
@@ -227,9 +243,10 @@ function parseOptionsSchema(optionsObj: unknown): OptionSchema[] {
 		.map(([key, raw]) => {
 			const o = isObject(raw) ? raw : {};
 			const hasType = typeof o.type === 'string';
+
 			return {
 				key,
-				kind: hasType ? 'value' : 'boolean',
+				kind: hasType ? ('value' as const) : ('boolean' as const),
 				type: hasType ? (o.type as string) : 'boolean',
 				description: typeof o.description === 'string' ? o.description : '',
 				shortcut: typeof o.shortcut === 'string' ? o.shortcut : '',
@@ -244,9 +261,9 @@ function parseOptionsSchema(optionsObj: unknown): OptionSchema[] {
 		.sort((a, b) => a.key.localeCompare(b.key));
 }
 
-/* ------------------------------------------------------------------ */
-/* Main                                                               */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Main                                                                      */
+/* -------------------------------------------------------------------------- */
 
 async function main(): Promise<void> {
 	if (!(await exists(ROOT_PKG_JSON))) {
@@ -277,16 +294,13 @@ async function main(): Promise<void> {
 	);
 
 	const parts: string[] = [];
+
 	parts.push(`# Mono Command-Line Reference
 
 > Generated by \`scripts/generate-readme.mjs\`.
 > Update \`.mono/config.json\`, \`.mono/*.json\`, and workspace package scripts to change this output.
 
 `);
-
-	// existing renderers unchanged
-	// ...
-	// (your formatMonoConfigSection / formatMonoCommandsSection calls here)
 
 	const docsIndex = await generateDocsIndex({
 		docsDir: path.join(REPO_ROOT, 'docs'),
