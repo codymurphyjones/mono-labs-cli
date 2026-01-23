@@ -53,18 +53,29 @@ export async function generateDocsIndex({
 		const match = contents.match(/^#\s+(.+)$/m);
 		if (!match) continue;
 
-		const title = match[1].trim();
+		const rawTitle = match[1].trim();
 		const relativeLink = `./${entry.name}`;
 
-		links.push(`[${title}](${relativeLink})`);
+		/**
+		 * Detect leading non-alphanumeric characters (emoji / symbols).
+		 * This matches one or more Unicode characters that are NOT letters or numbers.
+		 */
+		const leadingSymbolMatch = rawTitle.match(/^([^\p{L}\p{N}]+)\s*(.+)$/u);
+
+		if (leadingSymbolMatch) {
+			const [, symbol, title] = leadingSymbolMatch;
+			links.push(`- ${symbol} [${title}](${relativeLink})`);
+		} else {
+			links.push(`- [${rawTitle}](${relativeLink})`);
+		}
 	}
 
-	// Sort alphabetically by title for stability
+	// Sort alphabetically by rendered text (stable output)
 	links.sort((a, b) => a.localeCompare(b));
 
-	// Append Back to Readme (hardcoded)
+	// Append Back to Readme
 	links.push('');
-
 	links.push('🏠 ← [Back to README](../README.md)');
+
 	return links.join('\n');
 }
