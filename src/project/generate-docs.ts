@@ -19,6 +19,7 @@ export interface GenerateDocsIndexOptions {
 	docsDir: string;
 	excludeFile?: string;
 }
+
 /**
  * Generate a docs index from markdown files.
  *
@@ -37,6 +38,11 @@ export async function generateDocsIndex({
 	for (const entry of entries) {
 		if (!entry.isFile()) continue;
 		if (!entry.name.endsWith('.md')) continue;
+
+		// Always ignore docs/readme.md (case-insensitive)
+		if (entry.name.toLowerCase() === 'readme.md') continue;
+
+		// Optionally ignore a caller-specified file
 		if (excludeFile && entry.name === excludeFile) continue;
 
 		const filePath = path.join(dirPath, entry.name);
@@ -55,7 +61,7 @@ export async function generateDocsIndex({
 	// Sort alphabetically by title for stability
 	links.sort((a, b) => a.localeCompare(b));
 
-	// Append Back to Readme
+	// Append Back to Readme (hardcoded)
 	links.push('');
 	links.push('[Back to Readme](../README.md)');
 
