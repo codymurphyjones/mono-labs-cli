@@ -1,64 +1,9 @@
 // scripts/generate-readme.mjs
 // Node >= 18 recommended
-
-import { promises as fs, Dirent } from 'node:fs';
+import { promises as fs } from 'node:fs';
+import { Dirent } from 'node:fs';
 import path from 'node:path';
 import { generateDocsIndex } from './generate-docs.js';
-
-/* -------------------------------------------------------------------------- */
-/* Types                                                                      */
-/* -------------------------------------------------------------------------- */
-
-type MonoConfig = {
-	path: string;
-	config: {
-		envMap?: string[];
-		prodFlag?: string;
-		workspace?: {
-			packageMaps?: Record<string, string>;
-			preactions?: string[];
-		};
-	};
-};
-
-type MonoCommand = {
-	name: string;
-	file: string;
-	json: {
-		description?: string;
-		argument?: {
-			type?: string;
-			description?: string;
-			default?: unknown;
-			required?: boolean;
-		};
-		options?: Record<string, unknown>;
-		environments?: Record<string, Record<string, string>>;
-		preactions?: string[];
-		actions?: string[];
-	};
-};
-
-type PackageInfo = {
-	name: string;
-	dir: string;
-	scripts: Record<string, string>;
-};
-
-type OptionSchema = {
-	key: string;
-	kind: 'boolean' | 'value';
-	type: string;
-	description: string;
-	shortcut: string;
-	default: unknown;
-	allowed: string[] | null;
-	allowAll: boolean;
-};
-
-/* -------------------------------------------------------------------------- */
-/* Constants                                                                  */
-/* -------------------------------------------------------------------------- */
 
 const REPO_ROOT = path.resolve(process.cwd());
 const MONO_DIR = path.join(REPO_ROOT, '.mono');
@@ -66,117 +11,149 @@ const ROOT_PKG_JSON = path.join(REPO_ROOT, 'package.json');
 const OUTPUT_PATH = path.join(REPO_ROOT, 'docs');
 const OUTPUT_README = path.join(OUTPUT_PATH, 'command-line.md');
 
-/* -------------------------------------------------------------------------- */
-/* Utils                                                                      */
-/* -------------------------------------------------------------------------- */
-
 async function ensureParentDir(filePath: string): Promise<void> {
-	await fs.mkdir(path.dirname(filePath), { recursive: true });
+	const dir = path.dirname(filePath);
+	console.log(`[ensureParentDir] Ensuring directory:`, dir);
+	await fs.mkdir(dir, { recursive: true });
 }
 
+// ---------- utils ----------
 async function exists(p: string): Promise<boolean> {
 	try {
 		await fs.access(p);
+		// Log existence check
+		console.log(`[exists] Path exists:`, p);
 		return true;
 	} catch {
+		console.log(`[exists] Path does NOT exist:`, p);
 		return false;
 	}
 }
-
 function isObject(v: unknown): v is Record<string, unknown> {
-	return typeof v === 'object' && v !== null && !Array.isArray(v);
+	return v !== null && typeof v === 'object' && !Array.isArray(v);
 }
-
 function toPosix(p: string): string {
 	return p.split(path.sep).join('/');
 }
-
-async function readJson<T>(filePath: string): Promise<T> {
-	return JSON.parse(await fs.readFile(filePath, 'utf8')) as T;
+async function readJson<T = any>(filePath: string): Promise<T> {
+	console.log(`[readJson] Reading JSON file:`, filePath);
+	const raw = await fs.readFile(filePath, 'utf8');
+	try {
+		const parsed = JSON.parse(raw);
+		console.log(`[readJson] Successfully parsed:`, filePath);
+		return parsed;
+	} catch (err) {
+		console.error(`[readJson] Failed to parse JSON:`, filePath, err);
+		throw err;
+	}
 }
-
 async function listDir(dir: string): Promise<Dirent[]> {
-	return fs.readdir(dir, { withFileTypes: true });
+	console.log(`[listDir] Listing directory:`, dir);
+	const entries = await fs.readdir(dir, { withFileTypes: true });
+	console.log(`[listDir] Found ${entries.length} entries in:`, dir);
+	return entries;
 }
-
 function normalizeWorkspacePatterns(workspacesField: unknown): string[] {
-	if (Array.isArray(workspacesField)) return workspacesField;
+	if (Array.isArray(workspacesField)) return workspacesField as string[];
 	if (
 		isObject(workspacesField) &&
-		Array.isArray((workspacesField as { packages?: unknown }).packages)
-	) {
-		return (workspacesField as { packages: string[] }).packages;
-	}
+		Array.isArray((workspacesField as any).packages)
+	)
+		return (workspacesField as any).packages;
 	return [];
 }
-
 function mdEscapeInline(s: string): string {
-	return s.replaceAll('`', '\\`');
+	return String(s ?? '').replaceAll('`', '\`');
 }
-
 function indentLines(s: string, spaces = 2): string {
 	const pad = ' '.repeat(spaces);
-	return s
+	return String(s ?? '')
 		.split('\n')
 		.map((l) => pad + l)
 		.join('\n');
 }
 
-/* -------------------------------------------------------------------------- */
-/* Workspace globbing                                                         */
-/* -------------------------------------------------------------------------- */
-
+// ---------- workspace glob matching (supports *, **, and plain segments) ----------
 function matchSegment(patternSeg: string, name: string): boolean {
 	if (patternSeg === '*') return true;
 	if (!patternSeg.includes('*')) return patternSeg === name;
 	const escaped = patternSeg.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
-	return new RegExp(`^${escaped.replaceAll('*', '.*')}$`).test(name);
+	const regex = new RegExp('^' + escaped.replaceAll('*', '.*') + '$');
+	return regex.test(name);
 }
 
 async function expandWorkspacePattern(
 	root: string,
 	pattern: string
 ): Promise<string[]> {
+	console.log(
+		`[expandWorkspacePattern] Expanding pattern:`,
+		pattern,
+		`from root:`,
+		root
+	);
 	const segs = toPosix(pattern).split('/').filter(Boolean);
 
-	async function expandFrom(dir: string, idx: number): Promise<string[]> {
-		if (idx >= segs.length) return [dir];
+	async function expandFrom(dir: string, segIndex: number): Promise<string[]> {
+		console.log(`[expandFrom] Directory:`, dir, `Segment index:`, segIndex);
+		if (segIndex >= segs.length) return [dir];
+		const seg = segs[segIndex];
+		console.log(`[expandFrom] Segment:`, seg);
+
+		if (seg === '**') {
+			const results: string[] = [];
+			results.push(...(await expandFrom(dir, segIndex + 1)));
+			const entries = await fs
+				.readdir(dir, { withFileTypes: true })
+				.catch(() => []);
+			console.log(
+				`[expandFrom] '**' entries in ${dir}:`,
+				entries.map((e) => e.name)
+			);
+			for (const e of entries) {
+				if (!e.isDirectory()) continue;
+				console.log(
+					`[expandFrom] Recursing into subdir:`,
+					path.join(dir, e.name)
+				);
+				results.push(...(await expandFrom(path.join(dir, e.name), segIndex)));
+			}
+			return results;
+		}
 
 		const entries = await fs
 			.readdir(dir, { withFileTypes: true })
 			.catch(() => []);
-
-		const seg = segs[idx];
-
-		if (seg === '**') {
-			const nested = await Promise.all(
-				entries
-					.filter((e) => e.isDirectory())
-					.map((e) => expandFrom(path.join(dir, e.name), idx))
-			);
-
-			return [...(await expandFrom(dir, idx + 1)), ...nested.flat()];
-		}
-
-		const nested = await Promise.all(
-			entries
-				.filter((e) => e.isDirectory() && matchSegment(seg, e.name))
-				.map((e) => expandFrom(path.join(dir, e.name), idx + 1))
+		console.log(
+			`[expandFrom] Entries in ${dir}:`,
+			entries.map((e) => e.name)
 		);
-
-		return nested.flat();
+		const results: string[] = [];
+		for (const e of entries) {
+			if (!e.isDirectory()) continue;
+			if (!matchSegment(seg, e.name)) continue;
+			console.log(
+				`[expandFrom] Matched segment '${seg}' with directory:`,
+				e.name
+			);
+			results.push(...(await expandFrom(path.join(dir, e.name), segIndex + 1)));
+		}
+		return results;
 	}
 
 	const dirs = await expandFrom(root, 0);
-
-	const pkgDirs = (
-		await Promise.all(
-			dirs.map(async (d) =>
-				(await exists(path.join(d, 'package.json'))) ? d : null
-			)
-		)
-	).filter(Boolean) as string[];
-
+	console.log(`[expandWorkspacePattern] Expanded directories:`, dirs);
+	const pkgDirs: string[] = [];
+	for (const d of dirs) {
+		const pkgPath = path.join(d, 'package.json');
+		if (await exists(pkgPath)) {
+			console.log(`[expandWorkspacePattern] Found package.json:`, pkgPath);
+			pkgDirs.push(d);
+		} else {
+			console.log(`[expandWorkspacePattern] No package.json in:`, d);
+		}
+	}
+	console.log(`[expandWorkspacePattern] Final package directories:`, pkgDirs);
 	return [...new Set(pkgDirs)];
 }
 
@@ -184,23 +161,46 @@ async function findWorkspacePackageDirs(
 	repoRoot: string,
 	workspacePatterns: string[]
 ): Promise<string[]> {
-	const resolved = await Promise.all(
-		workspacePatterns.map((p) => expandWorkspacePattern(repoRoot, p))
+	console.log(
+		`[findWorkspacePackageDirs] repoRoot:`,
+		repoRoot,
+		`workspacePatterns:`,
+		workspacePatterns
 	);
-	return [...new Set(resolved.flat())];
+	const dirs: string[] = [];
+	for (const pat of workspacePatterns) {
+		console.log(`[findWorkspacePackageDirs] Expanding pattern:`, pat);
+		const expanded = await expandWorkspacePattern(repoRoot, pat);
+		console.log(
+			`[findWorkspacePackageDirs] Expanded dirs for pattern '${pat}':`,
+			expanded
+		);
+		dirs.push(...expanded);
+	}
+	const uniqueDirs = [...new Set(dirs)];
+	console.log(
+		`[findWorkspacePackageDirs] Final unique package dirs:`,
+		uniqueDirs
+	);
+	return uniqueDirs;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Mono config + commands                                                     */
-/* -------------------------------------------------------------------------- */
-
+// ---------- .mono parsing ----------
 async function readMonoConfig(): Promise<MonoConfig | null> {
 	const configPath = path.join(MONO_DIR, 'config.json');
-	if (!(await exists(configPath))) return null;
-	return {
-		path: configPath,
-		config: await readJson<MonoConfig['config']>(configPath),
-	};
+	console.log(`[readMonoConfig] Looking for mono config at:`, configPath);
+	if (!(await exists(configPath))) {
+		console.log(`[readMonoConfig] No mono config found.`);
+		return null;
+	}
+	try {
+		const config = await readJson<any>(configPath);
+		console.log(`[readMonoConfig] Loaded mono config.`);
+		return { path: configPath, config };
+	} catch (err) {
+		console.error(`[readMonoConfig] Failed to load mono config:`, err);
+		return null;
+	}
 }
 
 function commandNameFromFile(filePath: string): string {
@@ -208,68 +208,390 @@ function commandNameFromFile(filePath: string): string {
 }
 
 async function readMonoCommands(): Promise<MonoCommand[]> {
-	if (!(await exists(MONO_DIR))) return [];
-
+	console.log(`[readMonoCommands] Reading mono commands from:`, MONO_DIR);
+	if (!(await exists(MONO_DIR))) {
+		console.log(`[readMonoCommands] Mono directory does not exist.`);
+		return [];
+	}
 	const entries = await listDir(MONO_DIR);
 
-	const commands = await Promise.all(
-		entries
-			.filter(
-				(e) =>
-					e.isFile() && e.name.endsWith('.json') && e.name !== 'config.json'
-			)
-			.map(async (e) => {
-				const file = path.join(MONO_DIR, e.name);
-				const json = await readJson<MonoCommand['json']>(file);
-				return {
-					name: commandNameFromFile(file),
-					file,
-					json,
-				};
-			})
-	);
+	const jsonFiles = entries
+		.filter((e) => e.isFile() && e.name.toLowerCase().endsWith('.json'))
+		.map((e) => path.join(MONO_DIR, e.name))
+		.filter((p) => path.basename(p).toLowerCase() !== 'config.json');
 
-	return commands.sort((a, b) => a.name.localeCompare(b.name));
+	console.log(`[readMonoCommands] Found JSON files:`, jsonFiles);
+	const commands: MonoCommand[] = [];
+	for (const file of jsonFiles) {
+		try {
+			console.log(`[readMonoCommands] Reading command file:`, file);
+			const j = await readJson<any>(file);
+			commands.push({
+				name: commandNameFromFile(file),
+				file,
+				json: j,
+			});
+			console.log(
+				`[readMonoCommands] Successfully loaded command:`,
+				commandNameFromFile(file)
+			);
+		} catch (err) {
+			console.error(
+				`[readMonoCommands] Failed to load command file:`,
+				file,
+				err
+			);
+			// skip invalid json
+		}
+	}
+
+	commands.sort((a, b) => a.name.localeCompare(b.name));
+	console.log(
+		`[readMonoCommands] Final sorted commands:`,
+		commands.map((c) => c.name)
+	);
+	return commands;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Options parsing                                                           */
-/* -------------------------------------------------------------------------- */
+// ---------- mono docs formatting ----------
+type OptionSchema = {
+	key: string;
+	kind: 'boolean' | 'value';
+	type: string;
+	description: string;
+	shortcut: string;
+	default: any;
+	allowed: string[] | null;
+	allowAll: boolean;
+};
+
+type MonoConfig = {
+	path: string;
+	config: any;
+};
 
 function parseOptionsSchema(optionsObj: unknown): OptionSchema[] {
+	// New structure supports:
+	// - optionKey: { type: "string", default, options: [], allowAll, shortcut, description }
+	// - boolean toggle: { shortcut, description } (no type)
 	if (!isObject(optionsObj)) return [];
 
-	return Object.entries(optionsObj)
-		.map(([key, raw]) => {
+	const entries: OptionSchema[] = Object.entries(optionsObj).map(
+		([key, raw]) => {
 			const o = isObject(raw) ? raw : {};
-			const hasType = typeof o.type === 'string';
-
+			const hasType = typeof o.type === 'string' && o.type.trim().length > 0;
+			const isBoolToggle = !hasType; // in your examples, booleans omit `type`
 			return {
 				key,
-				kind: hasType ? ('value' as const) : ('boolean' as const),
-				type: hasType ? (o.type as string) : 'boolean',
+				kind: isBoolToggle ? 'boolean' : 'value',
+				type: hasType ? String(o.type) : 'boolean',
 				description: typeof o.description === 'string' ? o.description : '',
 				shortcut: typeof o.shortcut === 'string' ? o.shortcut : '',
 				default: o.default,
-				allowed:
-					Array.isArray(o.options) ?
-						o.options.filter((x): x is string => typeof x === 'string')
-					:	null,
+				allowed: Array.isArray(o.options) ? o.options : null,
 				allowAll: o.allowAll === true,
 			};
-		})
-		.sort((a, b) => a.key.localeCompare(b.key));
+		}
+	);
+
+	entries.sort((a, b) => a.key.localeCompare(b.key));
+	return entries;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Main                                                                      */
-/* -------------------------------------------------------------------------- */
+function buildUsageExample(
+	commandName: string,
+	cmdJson: any,
+	options: OptionSchema[]
+): string {
+	const arg = cmdJson?.argument;
+	const hasArg = isObject(arg);
+	const argToken = hasArg ? `<${commandName}-arg>` : '';
 
-async function main(): Promise<void> {
-	if (!(await exists(ROOT_PKG_JSON))) {
-		throw new Error(`Missing: ${ROOT_PKG_JSON}`);
+	// choose a representative value option to show
+	const valueOpts = options.filter((o) => o.kind === 'value');
+	const boolOpts = options.filter((o) => o.kind === 'boolean');
+
+	const exampleParts = [`yarn mono ${commandName}`];
+	if (argToken) exampleParts.push(argToken);
+
+	// include at most 2 value options and 1 boolean in the example for readability
+	for (const o of valueOpts.slice(0, 2)) {
+		const flag = `--${o.key}`;
+		const val =
+			o.default !== undefined ? o.default : (o.allowed?.[0] ?? '<value>');
+		exampleParts.push(`${flag} ${val}`);
+	}
+	if (boolOpts.length) {
+		exampleParts.push(`--${boolOpts[0].key}`);
 	}
 
+	return exampleParts.join(' ');
+}
+
+function formatMonoConfigSection(monoConfig: MonoConfig | null): string {
+	const lines: string[] = [];
+	lines.push('## Mono configuration');
+	lines.push('');
+
+	if (!monoConfig) {
+		lines.push('_No `.mono/config.json` found._');
+		return lines.join('\n');
+	}
+
+	const c = monoConfig.config;
+	lines.push(
+		`Source: \`${toPosix(path.relative(REPO_ROOT, monoConfig.path))}\``
+	);
+	lines.push('');
+
+	if (Array.isArray(c.envMap) && c.envMap.length) {
+		lines.push('### envMap');
+		lines.push('');
+		lines.push(
+			'- ' + c.envMap.map((x: string) => `\`${mdEscapeInline(x)}\``).join(', ')
+		);
+		lines.push('');
+	}
+
+	const pkgMaps = c?.workspace?.packageMaps;
+	if (pkgMaps && isObject(pkgMaps) && Object.keys(pkgMaps).length) {
+		lines.push('### Workspace aliases (packageMaps)');
+		lines.push('');
+		const entries = Object.entries(pkgMaps).sort(([a], [b]) =>
+			a.localeCompare(b)
+		);
+		for (const [alias, target] of entries) {
+			lines.push(
+				`- \`${mdEscapeInline(alias)}\` → \`${mdEscapeInline(String(target))}\``
+			);
+		}
+		lines.push('');
+	}
+
+	const pre = c?.workspace?.preactions;
+	if (Array.isArray(pre) && pre.length) {
+		lines.push('### Global preactions');
+		lines.push('');
+		lines.push('```bash');
+		for (const p of pre) lines.push(String(p));
+		lines.push('```');
+		lines.push('');
+	}
+
+	if (typeof c.prodFlag === 'string' && c.prodFlag.trim()) {
+		lines.push('### prodFlag');
+		lines.push('');
+		lines.push(
+			`Production flag keyword: \`${mdEscapeInline(c.prodFlag.trim())}\``
+		);
+		lines.push('');
+	}
+
+	return lines.join('\n');
+}
+
+type MonoCommand = {
+	name: string;
+	file: string;
+	json: any;
+};
+
+function formatMonoCommandsSection(commands: MonoCommand[]): string {
+	const lines: string[] = [];
+	lines.push('## Mono commands');
+	lines.push('');
+	lines.push(
+		'Generated from `.mono/*.json` (excluding `config.json`). Each filename becomes a command:'
+	);
+	lines.push('');
+	lines.push('```bash');
+	lines.push('yarn mono <command> [argument] [--options]');
+	lines.push('```');
+	lines.push('');
+
+	if (!commands.length) {
+		lines.push('_No mono command JSON files found._');
+		return lines.join('\n');
+	}
+
+	// Index
+	lines.push('### Command index');
+	lines.push('');
+	for (const c of commands) {
+		const desc =
+			typeof c.json?.description === 'string' ? c.json.description.trim() : '';
+		const suffix = desc ? ` — ${desc}` : '';
+		lines.push(
+			`- [\`${mdEscapeInline(c.name)}\`](#mono-command-${mdEscapeInline(c.name).toLowerCase()})${suffix}`
+		);
+	}
+	lines.push('');
+
+	for (const c of commands) {
+		const j = c.json || {};
+		const rel = toPosix(path.relative(REPO_ROOT, c.file));
+		const anchor = `mono-command-${c.name.toLowerCase()}`;
+
+		const desc = typeof j.description === 'string' ? j.description.trim() : '';
+		const arg = j.argument;
+		const options = parseOptionsSchema(j.options);
+
+		lines.push('---');
+		lines.push(`### Mono command: ${c.name}`);
+		lines.push(`<a id="${anchor}"></a>`);
+		lines.push('');
+		lines.push(`Source: \`${rel}\``);
+		lines.push('');
+
+		if (desc) {
+			lines.push(`**Description:** ${mdEscapeInline(desc)}`);
+			lines.push('');
+		}
+
+		// Usage
+		lines.push('**Usage**');
+		lines.push('');
+		lines.push('```bash');
+		lines.push(
+			`yarn mono ${c.name}${isObject(arg) ? ` <${c.name}-arg>` : ''} [--options]`
+		);
+		lines.push('```');
+		lines.push('');
+		lines.push('Example:');
+		lines.push('');
+		lines.push('```bash');
+		lines.push(buildUsageExample(c.name, j, options));
+		lines.push('```');
+		lines.push('');
+
+		// Argument
+		if (isObject(arg)) {
+			lines.push('**Argument**');
+			lines.push('');
+			const bits: string[] = [];
+			if (typeof arg.type === 'string')
+				bits.push(`type: \`${mdEscapeInline(arg.type)}\``);
+			if (arg.default !== undefined)
+				bits.push(`default: \`${mdEscapeInline(String(arg.default))}\``);
+			if (typeof arg.description === 'string')
+				bits.push(mdEscapeInline(arg.description));
+			lines.push(`- ${bits.join(' • ') || '_(no details)_'} `);
+			lines.push('');
+		}
+
+		// Options
+		if (options.length) {
+			lines.push('**Options**');
+			lines.push('');
+			lines.push('| Option | Type | Shortcut | Default | Allowed | Notes |');
+			lines.push('|---|---:|:---:|---:|---|---|');
+			for (const o of options) {
+				const optCol =
+					o.kind === 'boolean' ?
+						`\`--${mdEscapeInline(o.key)}\``
+					:	`\`--${mdEscapeInline(o.key)} <${mdEscapeInline(o.key)}>\``;
+				const typeCol = `\`${mdEscapeInline(o.type)}\``;
+				const shortCol = o.shortcut ? `\`-${mdEscapeInline(o.shortcut)}\`` : '';
+				const defCol =
+					o.default !== undefined ? `\`${mdEscapeInline(o.default)}\`` : '';
+				const allowedCol =
+					o.allowed ?
+						o.allowed.map((x) => `\`${mdEscapeInline(x)}\``).join(', ')
+					:	'';
+				const notes = [
+					o.allowAll ? 'allowAll' : '',
+					o.description ? mdEscapeInline(o.description) : '',
+				]
+					.filter(Boolean)
+					.join(' • ');
+				lines.push(
+					`| ${optCol} | ${typeCol} | ${shortCol} | ${defCol} | ${allowedCol} | ${notes} |`
+				);
+			}
+			lines.push('');
+		}
+
+		// Environments
+		if (
+			j.environments &&
+			isObject(j.environments) &&
+			Object.keys(j.environments).length
+		) {
+			lines.push('**Environment Variables**');
+			lines.push('');
+			const envs = Object.entries(j.environments).sort(([a], [b]) =>
+				a.localeCompare(b)
+			);
+			for (const [envName, envObj] of envs) {
+				lines.push(`- \`${mdEscapeInline(envName)}\``);
+				if (isObject(envObj) && Object.keys(envObj).length) {
+					const kv = Object.entries(envObj).sort(([a], [b]) =>
+						a.localeCompare(b)
+					);
+					lines.push(
+						indentLines(
+							kv
+								.map(
+									([k, v]) =>
+										`- \`${mdEscapeInline(k)}\` = \`${mdEscapeInline(String(v))}\``
+								)
+								.join('\n'),
+							2
+						)
+					);
+				}
+			}
+			lines.push('');
+		}
+
+		// preactions/actions
+		if (Array.isArray(j.preactions) && j.preactions.length) {
+			lines.push('**Preactions**');
+			lines.push('');
+			lines.push('```bash');
+			for (const p of j.preactions) lines.push(String(p));
+			lines.push('```');
+			lines.push('');
+		}
+
+		if (Array.isArray(j.actions) && j.actions.length) {
+			lines.push('**Actions**');
+			lines.push('');
+			lines.push('```bash');
+			for (const a of j.actions) lines.push(String(a));
+			lines.push('```');
+			lines.push('');
+		}
+	}
+
+	return lines.join('\n');
+}
+
+// ---------- workspace scripts summary ----------
+
+// Define PackageInfo type
+type PackageInfo = {
+	name: string;
+	dir: string;
+	scripts: Record<string, string>;
+};
+
+function collectScripts(packages: PackageInfo[]): Map<string, string[]> {
+	const scriptToPackages = new Map<string, string[]>();
+	for (const p of packages) {
+		for (const scriptName of Object.keys(p.scripts || {})) {
+			if (!scriptToPackages.has(scriptName))
+				scriptToPackages.set(scriptName, []);
+			scriptToPackages.get(scriptName)!.push(p.name);
+		}
+	}
+	return scriptToPackages;
+}
+
+// ---------- main ----------
+async function main(): Promise<void> {
+	if (!(await exists(ROOT_PKG_JSON)))
+		throw new Error(`Missing: ${ROOT_PKG_JSON}`);
 	await ensureParentDir(OUTPUT_PATH);
 
 	const rootPkg = await readJson<any>(ROOT_PKG_JSON);
@@ -277,47 +599,59 @@ async function main(): Promise<void> {
 
 	const monoConfig = await readMonoConfig();
 	const monoCommands = await readMonoCommands();
-	const pkgDirs = await findWorkspacePackageDirs(REPO_ROOT, workspacePatterns);
 
-	const packages: PackageInfo[] = await Promise.all(
-		pkgDirs.map(async (dir) => {
-			const pj = await readJson<any>(path.join(dir, 'package.json'));
-			return {
+	const pkgDirs = await findWorkspacePackageDirs(REPO_ROOT, workspacePatterns);
+	console.log(`[main] Package directories found:`, pkgDirs);
+	const packages: PackageInfo[] = [];
+	for (const dir of pkgDirs) {
+		try {
+			const pkgPath = path.join(dir, 'package.json');
+			console.log(`[main] Reading package.json:`, pkgPath);
+			const pj = await readJson<any>(pkgPath);
+			packages.push({
 				name:
 					pj.name ||
 					toPosix(path.relative(REPO_ROOT, dir)) ||
 					path.basename(dir),
 				dir,
-				scripts: pj.scripts ?? {},
-			};
-		})
-	);
+				scripts: pj.scripts || {},
+			});
+			console.log(`[main] Loaded package:`, pj.name || dir);
+		} catch (err) {
+			console.error(`[main] Failed to load package.json for:`, dir, err);
+			// skip
+		}
+	}
 
 	const parts: string[] = [];
-
 	parts.push(`# Mono Command-Line Reference
 
 > Generated by \`scripts/generate-readme.mjs\`.
 > Update \`.mono/config.json\`, \`.mono/*.json\`, and workspace package scripts to change this output.
 
 `);
+	parts.push(formatMonoConfigSection(monoConfig));
+	parts.push('');
+	parts.push(formatMonoCommandsSection(monoCommands));
+	parts.push('');
 
-	const docsIndex = await generateDocsIndex({
+	const val = await generateDocsIndex({
 		docsDir: path.join(REPO_ROOT, 'docs'),
 		excludeFile: 'command-line.md',
 	});
 
-	parts.push(docsIndex);
+	val.split('\n').forEach((line) => parts.push(line));
 
+	await ensureParentDir(OUTPUT_README);
 	await fs.writeFile(OUTPUT_README, parts.join('\n'), 'utf8');
 
-	console.log(`Generated: ${OUTPUT_README}`);
-	console.log(`- mono config: ${monoConfig ? 'yes' : 'no'}`);
-	console.log(`- mono commands: ${monoCommands.length}`);
-	console.log(`- workspace packages: ${packages.length}`);
+	console.log(`[main] Generated: ${OUTPUT_README}`);
+	console.log(`[main] mono config: ${monoConfig ? 'yes' : 'no'}`);
+	console.log(`[main] mono commands: ${monoCommands.length}`);
+	console.log(`[main] workspace packages: ${packages.length}`);
 }
 
 main().catch((err) => {
-	console.error(err);
+	console.error(err?.stack || String(err));
 	process.exitCode = 1;
 });
