@@ -20,6 +20,9 @@ export interface GenerateDocsIndexOptions {
 	excludeFile?: string;
 }
 
+function createSpacer() {
+	return '\n\n';
+}
 /**
  * Generate a docs index from markdown files.
  *
@@ -35,7 +38,9 @@ export async function generateDocsIndex({
 	const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
 	const links: string[] = [];
-
+	links.push('\n');
+	links.push('---');
+	links.push('\n');
 	for (const entry of entries) {
 		if (!entry.isFile()) continue;
 		if (!entry.name.endsWith('.md')) continue;
@@ -55,10 +60,6 @@ export async function generateDocsIndex({
 
 		const rawTitle = match[1].trim();
 		const relativeLink = `./${entry.name}`;
-
-		links.push('\n');
-		links.push('---');
-		links.push('\n');
 
 		/**
 		 * Detect leading non-alphanumeric characters (emoji / symbols).
