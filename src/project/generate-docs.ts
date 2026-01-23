@@ -64,7 +64,7 @@ export async function generateDocsIndex({
 
 	// Append Back to Readme (hardcoded)
 	links.push('');
-	links.push('[Back to Readme](../README.md)');
 
+	links.push('🏠 ← [Back to README](../README.md)');
 	return links.join('\n');
 }
