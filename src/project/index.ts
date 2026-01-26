@@ -1,6 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+/* ──────────────────────────────────────────────────────────
+ * Types
+ * ────────────────────────────────────────────────────────── */
+
 type WorkspaceDetectResult = {
 	cwd: string;
 	workspaceRoot: string | null;
@@ -8,64 +12,6 @@ type WorkspaceDetectResult = {
 	configDir: string;
 	configPath: string;
 };
-
-/**
- * Finds the workspace root by walking up from `startDir`.
- * Works for Yarn/npm workspaces via package.json "workspaces".
- * Also recognizes common mono-repo markers as fallback.
- */
-export function detectWorkspaceAndConfigPath(
-	startDir: string = process.cwd(),
-	configFileName: string = 'mono.app.json'
-): WorkspaceDetectResult {
-	const cwd = path.resolve(startDir);
-
-	const isWorkspaceRootDir = (dir: string): boolean => {
-		// 1) package.json workspaces
-		const pkgPath = path.join(dir, 'package.json');
-		if (fs.existsSync(pkgPath)) {
-			try {
-				const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8')) as any;
-				if (pkg?.workspaces) return true;
-			} catch {
-				// ignore
-			}
-		}
-
-		// 2) other common monorepo root markers (fallback)
-		const markers = [
-			'pnpm-workspace.yaml',
-			'lerna.json',
-			'turbo.json',
-			'nx.json',
-			'.git', // good enough for many repos
-		];
-		return markers.some((m) => fs.existsSync(path.join(dir, m)));
-	};
-
-	const findUp = (
-		from: string,
-		predicate: (dir: string) => boolean
-	): string | null => {
-		let dir = path.resolve(from);
-		while (true) {
-			if (predicate(dir)) return dir;
-			const parent = path.dirname(dir);
-			if (parent === dir) return null; // reached filesystem root
-			dir = parent;
-		}
-	};
-
-	const workspaceRoot = findUp(cwd, isWorkspaceRootDir);
-	const isWorkspaceRoot = workspaceRoot !== null && workspaceRoot === cwd;
-
-	// If we are inside a workspace package, config lives at root.
-	// If we're already at root, config lives in cwd (same thing).
-	const configDir = workspaceRoot ?? cwd;
-	const configPath = path.join(configDir, configFileName);
-
-	return { cwd, workspaceRoot, isWorkspaceRoot, configDir, configPath };
-}
 
 type DefaultAppConfig = {
 	appleAppId?: string;
@@ -103,11 +49,115 @@ type ConfigTypeMap = {
 type ResolveConfig<TType extends string, TCustom = unknown> =
 	TType extends keyof ConfigTypeMap ? ConfigTypeMap[TType] : TCustom;
 
+/* ──────────────────────────────────────────────────────────
+ * Environment helpers
+ * ────────────────────────────────────────────────────────── */
+
+function isLambdaRuntime(): boolean {
+	return !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+}
+
+/* ──────────────────────────────────────────────────────────
+ * Workspace detection (CLI / local dev only)
+ * ────────────────────────────────────────────────────────── */
+
+function detectWorkspaceAndConfigPath(
+	startDir: string,
+	configFileName: string
+): WorkspaceDetectResult {
+	const cwd = path.resolve(startDir);
+
+	const isWorkspaceRootDir = (dir: string): boolean => {
+		const pkgPath = path.join(dir, 'package.json');
+		if (fs.existsSync(pkgPath)) {
+			try {
+				const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+				if (pkg?.workspaces) return true;
+			} catch {
+				// ignore
+			}
+		}
+
+		const markers = [
+			'pnpm-workspace.yaml',
+			'lerna.json',
+			'turbo.json',
+			'nx.json',
+			'.git',
+		];
+
+		return markers.some((m) => fs.existsSync(path.join(dir, m)));
+	};
+
+	let dir = cwd;
+	while (true) {
+		if (isWorkspaceRootDir(dir)) {
+			return {
+				cwd,
+				workspaceRoot: dir,
+				isWorkspaceRoot: dir === cwd,
+				configDir: dir,
+				configPath: path.join(dir, configFileName),
+			};
+		}
+
+		const parent = path.dirname(dir);
+		if (parent === dir) break;
+		dir = parent;
+	}
+
+	return {
+		cwd,
+		workspaceRoot: null,
+		isWorkspaceRoot: false,
+		configDir: cwd,
+		configPath: path.join(cwd, configFileName),
+	};
+}
+
+/* ──────────────────────────────────────────────────────────
+ * Bundled config loader (Lambda runtime)
+ * ────────────────────────────────────────────────────────── */
+
+function loadConfigFromBundle(fileName: string): unknown | null {
+	const bundledPath = path.join(__dirname, fileName);
+
+	if (fs.existsSync(bundledPath)) {
+		return JSON.parse(fs.readFileSync(bundledPath, 'utf8'));
+	}
+
+	return null;
+}
+
+/* ──────────────────────────────────────────────────────────
+ * Public API
+ * ────────────────────────────────────────────────────────── */
+
 export function loadAppConfig<TCustom = unknown, TType extends string = 'app'>(
 	configType: TType = 'app' as TType,
 	startDir: string = process.cwd()
 ): { config: ResolveConfig<TType, TCustom>; meta: WorkspaceDetectResult } {
 	const fileName = `mono.${configType}.json`;
+
+	// ✅ 1. Lambda runtime: load bundled config if present
+	if (isLambdaRuntime()) {
+		const bundled = loadConfigFromBundle(fileName);
+
+		if (bundled) {
+			return {
+				config: bundled as ResolveConfig<TType, TCustom>,
+				meta: {
+					cwd: __dirname,
+					workspaceRoot: null,
+					isWorkspaceRoot: false,
+					configDir: __dirname,
+					configPath: path.join(__dirname, fileName),
+				},
+			};
+		}
+	}
+
+	// ✅ 2. CLI / local dev: workspace discovery
 	const meta = detectWorkspaceAndConfigPath(startDir, fileName);
 
 	if (!fs.existsSync(meta.configPath)) {
@@ -115,6 +165,7 @@ export function loadAppConfig<TCustom = unknown, TType extends string = 'app'>(
 			meta.workspaceRoot ?
 				`workspace root: ${meta.workspaceRoot}`
 			:	`cwd: ${meta.cwd}`;
+
 		throw new Error(
 			`Could not find ${fileName} at ${meta.configPath} (detected from ${where}).`
 		);
@@ -123,7 +174,7 @@ export function loadAppConfig<TCustom = unknown, TType extends string = 'app'>(
 	const raw = fs.readFileSync(meta.configPath, 'utf8');
 	const config = JSON.parse(raw) as ResolveConfig<TType, TCustom>;
 
-	// Apply requiredSystemDefaults for missing/null/undefined values
+	// ✅ Apply required system defaults
 	if (typeof config === 'object' && config !== null) {
 		for (const key of Object.keys(requiredSystemDefaults)) {
 			// @ts-ignore: index signature
