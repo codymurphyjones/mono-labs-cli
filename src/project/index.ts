@@ -30,6 +30,7 @@ type DefaultDeployConfig = {
 	ec2User: string;
 	defaultVpcId?: string;
 	defaultVpcSecurityGroupId?: string;
+	ec2Bridge?: string;
 };
 
 const requiredSystemDefaults = {
