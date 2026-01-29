@@ -12,3 +12,10 @@ export default {
 	filterUnwantedEnvVars,
 	filterUnwantedEnvVarsEAS,
 };
+
+export {
+	replaceTokens,
+	generateNewEnvList,
+	filterUnwantedEnvVars,
+	filterUnwantedEnvVarsEAS,
+};
