@@ -19,7 +19,6 @@ type DefaultAppConfig = {
 	appName?: string;
 	easProjectId?: string;
 	appScheme?: string;
-	warehouseRegion?: string;
 };
 
 type DefaultDeployConfig = {
@@ -32,6 +31,7 @@ type DefaultDeployConfig = {
 	defaultVpcId?: string;
 	defaultVpcSecurityGroupId?: string;
 	ec2Bridge?: string;
+	warehouseRegion?: string;
 };
 
 const requiredSystemDefaults = {
