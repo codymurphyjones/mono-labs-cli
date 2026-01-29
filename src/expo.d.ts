@@ -5,3 +5,7 @@ export declare function replaceTokens(
 	input: string,
 	tokens: Record<string, string>
 ): string;
+
+export declare function filterUnwantedEnvVarsEAS(
+	envVars: Record<string, string>
+): Record<string, string>;
