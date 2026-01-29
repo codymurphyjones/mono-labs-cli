@@ -19,6 +19,7 @@ type DefaultAppConfig = {
 	appName?: string;
 	easProjectId?: string;
 	appScheme?: string;
+	warehouseRegion?: string;
 };
 
 type DefaultDeployConfig = {
