@@ -28,15 +28,13 @@ type DefaultDeployConfig = {
 	defaultKeyPair?: string;
 	regions: string[];
 	ec2User: string;
-	defaultVpcId?: string;
-	defaultVpcSecurityGroupId?: string;
-	ec2Bridge?: string;
-	warehouseRegion?: string;
+	warehouseRegion: string;
 };
 
 const requiredSystemDefaults = {
 	ec2User: 'ec2-user',
 	regions: ['us-east-1'],
+	warehouseRegion: 'us-east-1',
 };
 
 type ConfigTypeMap = {
