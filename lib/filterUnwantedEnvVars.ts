@@ -1,0 +1,95 @@
+export function filterUnwantedEnvVars(env: NodeJS.ProcessEnv): Record<string, string | undefined> {
+  const unwantedPrefixes = [
+    // ... trimmed list from JS version (kept minimal)
+    'npm_config_force',
+  ]
+
+  return Object.keys(env).reduce(
+    (obj, key) => {
+      if (!unwantedPrefixes.some((prefix) => key.startsWith(prefix))) {
+        obj[key] = env[key]
+      }
+      return obj
+    },
+    {} as Record<string, string | undefined>
+  )
+}
+
+export function filterUnwantedEnvVarsEAS(
+  env: NodeJS.ProcessEnv
+): Record<string, string | undefined> {
+  const unwantedPrefixes = [
+    'ProgramData',
+    'ProgramFiles',
+    'ProgramFiles(x86)',
+    'ProgramW6432',
+    'PSModulePath',
+    'PUBLIC',
+    'TEMP',
+    'TMP',
+    'EFC_',
+    'FPS_',
+    'GIT_',
+    'NVM_',
+    'VSCODE_',
+    'windir',
+    'Chocolatey',
+    'ALLUSERSPROFILE',
+    'APPDATA',
+    'CommonProgramFiles',
+    'CommonProgramW6432',
+    'ComSpec',
+    'Driver',
+    'HOME',
+    'npm',
+    'LOCALAPPDATA',
+    'LOGONSERVER',
+    'NUMBER_OF_PROCESSORS',
+    'OS',
+    'COREPACK',
+    'PROCESSOR',
+    'USERDOMAIN',
+    'USERDOMAIN_ROAMINGPROFILE',
+    'USERNAME',
+    'USERPROFILE',
+    'CUDA',
+    'SESSIONNAME',
+    'ZES',
+    '3DVPATH',
+    'APP_NAME',
+    'asl.log',
+    'BERRY_BIN_FOLDER',
+    'CHROME_CRASHPAD_PIPE_NAME',
+    'COLORTERM',
+    'COMPUTERNAME',
+    'CUDNN',
+    'EAS_BUILD_PROFILE',
+    'EAS_PROJECT_ID',
+    'EXPO_UNSTABLE_ATLAS',
+    'INIT_CWD',
+    'JAVA_HOME',
+    'LANG',
+    'OneDrive',
+    'ORIGINAL_XDG_CURRENT_DESKTOP',
+    'PROJECT_CWD',
+    'PROMPT',
+    'PWD',
+    'TERM_PROGRAM',
+    'TERM_PROGRAM_VERSION',
+    '__PSLockDownPolicy',
+    'PATH',
+    'SystemRoot',
+    'SystemDrive',
+    'npm_',
+  ]
+
+  return Object.keys(env).reduce(
+    (obj, key) => {
+      if (!unwantedPrefixes.some((prefix) => key.startsWith(prefix))) {
+        obj[key] = env[key]
+      }
+      return obj
+    },
+    {} as Record<string, string | undefined>
+  )
+}

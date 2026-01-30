@@ -1,76 +1,73 @@
 // Main entry point for @mono-labs/cli package
 
 import {
-	filterUnwantedEnvVars,
-	filterUnwantedEnvVarsEAS,
-	generateNewEnvList,
-} from './expo-files/filterUnwantedEnvVars.js';
+  filterUnwantedEnvVars,
+  filterUnwantedEnvVarsEAS,
+  generateNewEnvList,
+} from './expo-files/filterUnwantedEnvVars'
 
 /* ------------------------------------------------------------------
  * Internal data layer
  * ------------------------------------------------------------------ */
 
-type DataLayer = Record<string, unknown>;
+type DataLayer = Record<string, unknown>
 
-const dataLayer: DataLayer = Object.create(null);
+const dataLayer: DataLayer = Object.create(null)
 
 export function setData(key: string, value: unknown): void {
-	if (value !== undefined) {
-		dataLayer[key] = value;
-	}
+  if (value !== undefined) {
+    dataLayer[key] = value
+  }
 }
 
 export function mergeData(obj: Record<string, unknown> = {}): DataLayer {
-	Object.entries(obj).forEach(([k, v]) => setData(k, v));
-	return dataLayer;
+  Object.entries(obj).forEach(([k, v]) => setData(k, v))
+  return dataLayer
 }
 
 export function getData(key?: string): unknown {
-	return key ? dataLayer[key] : dataLayer;
+  return key ? dataLayer[key] : dataLayer
 }
 
 export function hasData(key: string): boolean {
-	return Object.prototype.hasOwnProperty.call(dataLayer, key);
+  return Object.prototype.hasOwnProperty.call(dataLayer, key)
 }
 
 /* ------------------------------------------------------------------
  * Token replacement
  * ------------------------------------------------------------------ */
 
-export function replaceTokens(
-	str: unknown,
-	env?: Record<string, string | undefined>
-): unknown {
-	if (typeof str !== 'string') return str;
+export function replaceTokens(str: unknown, env?: Record<string, string | undefined>): unknown {
+  if (typeof str !== 'string') return str
 
-	return str.replace(/\$\{([^}]+)\}|\$([A-Z0-9_]+)/g, (_match, k1, k2) => {
-		const key = k1 || k2;
+  return str.replace(/\$\{([^}]+)\}|\$([A-Z0-9_]+)/g, (_match, k1, k2) => {
+    const key = k1 || k2
 
-		// data layer takes priority
-		if (hasData(key)) {
-			const val = getData(key);
-			return val == null ? '' : String(val);
-		}
+    // data layer takes priority
+    if (hasData(key)) {
+      const val = getData(key)
+      return val == null ? '' : String(val)
+    }
 
-		// environment variables
-		if (env && Object.prototype.hasOwnProperty.call(env, key)) {
-			const val = env[key];
-			return val == null ? '' : String(val);
-		}
+    // environment variables
+    if (env && Object.prototype.hasOwnProperty.call(env, key)) {
+      const val = env[key]
+      return val == null ? '' : String(val)
+    }
 
-		return '';
-	});
+    return ''
+  })
 }
 
 /* ------------------------------------------------------------------
  * Exports
  * ------------------------------------------------------------------ */
 
-export { generateNewEnvList, filterUnwantedEnvVars, filterUnwantedEnvVarsEAS };
+export { generateNewEnvList, filterUnwantedEnvVars, filterUnwantedEnvVarsEAS }
 
 export default {
-	generateNewEnvList,
-	replaceTokens,
-	filterUnwantedEnvVars,
-	filterUnwantedEnvVarsEAS,
-};
+  generateNewEnvList,
+  replaceTokens,
+  filterUnwantedEnvVars,
+  filterUnwantedEnvVarsEAS,
+}
