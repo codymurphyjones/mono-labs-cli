@@ -38,7 +38,7 @@ const requiredSystemDefaults = {
 	regions: ['us-east-1'],
 	warehouseRegion: 'us-east-1',
 	dbInstanceType: 't3.micro',
-	appInstanceType: 't3.micro',
+	appInstanceType: 't3.large',
 };
 
 type ConfigTypeMap = {
