@@ -29,12 +29,16 @@ type DefaultDeployConfig = {
 	regions: string[];
 	ec2User: string;
 	warehouseRegion: string;
+	dbInstanceType: string;
+	appInstanceType: string;
 };
 
 const requiredSystemDefaults = {
 	ec2User: 'ec2-user',
 	regions: ['us-east-1'],
 	warehouseRegion: 'us-east-1',
+	dbInstanceType: 't3.micro',
+	appInstanceType: 't3.micro',
 };
 
 type ConfigTypeMap = {
