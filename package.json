@@ -102,6 +102,5 @@
     "dist/",
     "types.d.ts",
     "README.md"
-  ],
-  "private": true
+  ]
 }
