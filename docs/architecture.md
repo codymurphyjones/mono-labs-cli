@@ -14,7 +14,7 @@ debug it.
 4. The command definition is registered with Commander via `cliFactory.js`.
 5. When a command runs:
    - Options & argument defaults are merged into a shared `dataLayer`.
-   - `runHasteCommand()` executes preactions sequentially (foreground) and
+   - `runMonoCommand()` executes preactions sequentially (foreground) and
      actions (background + final foreground) with token replacement.
    - Outputs like `{out:ngrok_api https://1234.ngrok.io}` from preactions
      populate the `dataLayer` automatically for later substitution.
@@ -27,7 +27,7 @@ debug it.
 | `cliFactory.js`             | Dynamically builds Commander commands from each config file.                   |
 | `dataLayer.js`              | Central mutable key/value store for dynamic tokens and defaults.               |
 | `validators.js`             | Enforces enumerated option values (e.g., platform must be one of `ios          | android`). |
-| `runHasteCommand.js`        | Orchestrates preactions + actions and environment selection.                   |
+| `runMonoCommand.js`         | Orchestrates preactions + actions and environment selection.                   |
 | `runners/runForeground.js`  | Spawns a command; captures output; extracts `{out:key value}` tokens.          |
 | `runners/runBackground.js`  | Spawns background or attached commands with environment + token substitution.  |
 | `runners/processManager.js` | Tracks background processes and ensures cleanup on signals.                    |
@@ -50,9 +50,9 @@ handler(arg, cmd)
   opts = cmd.opts()
   verifyOptionValue for each enumerated option
   mergeData({ ...opts, arg }) // shared store
-  runHasteCommand(configObject, opts)
+  runMonoCommand(configObject, opts)
 
-runHasteCommand()
+runMonoCommand()
   envObj = options.stage ? environments.stage : environments.dev
   envObj.AWS_PROFILE = CDK_DEPLOY_PROFILE || 'default'
 

@@ -86,7 +86,7 @@ If a command expects AWS credentials (due to `AWS_PROFILE` injection):
 ## 8. Preaction Fails but Actions Still Start
 
 Actions should NOT start if a preaction fails (foreground rejects). If they do,
-verify you didn't manually modify `runHasteCommand.js` error handling.
+verify you didn't manually modify `runMonoCommand.js` error handling.
 
 ## 9. Need to Inspect Data Layer
 
@@ -96,7 +96,7 @@ Add a debug action at the start of `actions`:
 "actions": ["node -e \"console.log(process.env)\"", "echo next"]
 ```
 
-Or temporarily add inside `runHasteCommand.js`:
+Or temporarily add inside `runMonoCommand.js`:
 
 ```js
 import { getData } from './dataLayer.js';
@@ -135,7 +135,7 @@ NGROK_URL=https://1234.ngrok.dev
 
 Currently no built-in dry-run. You can simulate by:
 
-- Copying `runHasteCommand.js` and logging planned commands without spawning.
+- Copying `runMonoCommand.js` and logging planned commands without spawning.
 - Or modify temporarily to `console.log('WOULD RUN', cmd)`.
 
 ## 15. Reverting Changes

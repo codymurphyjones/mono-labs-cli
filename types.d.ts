@@ -1,7 +1,7 @@
 // Type definitions for mono-labs CLI
 
 declare module '@mono-labs/cli' {
-	export interface HasteConfig {
+	export interface MonoConfig {
 		envMap?: Record<string, string>;
 		workspace?: {
 			packageMaps?: Record<string, string>;
@@ -9,7 +9,7 @@ declare module '@mono-labs/cli' {
 		};
 	}
 
-	export interface HasteFiles {
+	export interface MonoFiles {
 		[commandName: string]: CommandConfig;
 	}
 
@@ -42,8 +42,8 @@ declare module '@mono-labs/cli' {
 	export interface BootResult {
 		rootDir: string;
 		rootJson: any;
-		files: HasteFiles;
-		config: HasteConfig;
+		files: MonoFiles;
+		config: MonoConfig;
 	}
 
 	export function filterUnwantedEnvVarsEAS(env: string): NodeJS.ProcessEnv;
@@ -60,17 +60,17 @@ declare module '@mono-labs/cli' {
 
 	export function boot(): BootResult;
 
-	export function getHasteConfig(): {
-		files: HasteFiles;
-		config: HasteConfig;
+	export function getMonoConfig(): {
+		files: MonoFiles;
+		config: MonoConfig;
 	};
 
 	export function getRootDirectory(): string;
 	export function getRootJson(): any;
 
-	export function buildCommands(files: HasteFiles): void;
+	export function buildCommands(files: MonoFiles): void;
 
-	export function runHasteCommand(
+	export function runMonoCommand(
 		configObject: CommandConfig,
 		options: Record<string, any>
 	): Promise<void>;

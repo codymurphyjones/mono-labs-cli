@@ -25,7 +25,7 @@ usage examples, and troubleshooting recommendations.
       - dataLayer.js
       - index.js
       - readEnv.js
-      - runHasteCommand.js
+      - runMonoCommand.js
       - test.js
       - testflag.js
       - validators.js
@@ -77,7 +77,7 @@ usage examples, and troubleshooting recommendations.
 - **dataLayer.js**: Manages data access and persistence for the build process.
 - **index.js**: Entry point for build-process commands.
 - **readEnv.js**: Reads and processes environment variables for builds.
-- **runHasteCommand.js**: Executes Haste-specific build commands.
+- **runMonoCommand.js**: Executes Mono-specific build commands.
 - **test.js**: Handles test execution within the build process.
 - **testflag.js**: Manages test flags or toggles for conditional test execution.
 - **validators.js**: Provides validation functions for build configurations and
@@ -177,7 +177,7 @@ usage examples, and troubleshooting recommendations.
   - Use `runBackground.js` and `runForeground.js` to isolate issues with process
     execution.
 - **Build/Test Failures:**
-  - Review logs from `test.js` and `runHasteCommand.js` for error details.
+  - Review logs from `test.js` and `runMonoCommand.js` for error details.
   - Use `testflag.js` to toggle test features and isolate problems.
 - **Pruning/Seeding Issues:**
   - Ensure correct paths and data formats when using prune or seed commands.
