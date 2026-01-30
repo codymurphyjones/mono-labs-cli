@@ -30,6 +30,7 @@ export async function runMonoCommand(configObject: any, options: any = {}): Prom
   const { config } = getMonoConfig() as { config: any }
   const devConfig = configObject.environments?.dev ?? {}
   console.log('configObject:', JSON.stringify(configObject, null, 2))
+  mergeData({ ...options })
 
   // Usage:
   const envPath = path.resolve(process.cwd(), '.env')
