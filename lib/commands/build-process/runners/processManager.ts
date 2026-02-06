@@ -39,4 +39,22 @@ export function ensureSignalHandlers(): void {
     killAllBackground()
     process.exit(143)
   })
+
+  // Handle process exit event - ensures cleanup on any exit path
+  process.on('exit', () => {
+    killAllBackground()
+  })
+
+  // Handle beforeExit - fires when event loop empties (before exit)
+  process.on('beforeExit', () => {
+    killAllBackground()
+  })
+
+  // Windows-specific: handle SIGHUP as fallback for terminal close
+  if (process.platform === 'win32') {
+    process.on('SIGHUP', () => {
+      killAllBackground()
+      process.exit(129)
+    })
+  }
 }
