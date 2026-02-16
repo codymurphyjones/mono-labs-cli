@@ -1,6 +1,6 @@
 {
   "name": "@mono-labs/cli",
-  "version": "0.0.247",
+  "version": "0.1.249",
   "type": "commonjs",
   "description": "A CLI tool for building and deploying projects",
   "main": "dist/index.js",
@@ -70,8 +70,8 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@mono-labs/project": "0.0.247",
-    "@mono-labs/expo": "0.0.247",
+    "@mono-labs/project": "0.1.249",
+    "@mono-labs/expo": "0.1.249",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
     "cross-spawn": "^7.0.6",
