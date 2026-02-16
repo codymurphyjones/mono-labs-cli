@@ -2,9 +2,9 @@
 
 import {
   filterUnwantedEnvVars,
-  filterUnwantedEnvVarsEAS,
+  filterUnwantedEnvVarsEASExpo as filterUnwantedEnvVarsEAS,
   generateNewEnvList,
-} from './expo-files/filterUnwantedEnvVars'
+} from '@mono-labs/expo'
 
 /* ------------------------------------------------------------------
  * Internal data layer

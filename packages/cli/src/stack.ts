@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib'
 import { Construct } from 'constructs'
-import { loadMergedEnv } from './project/merge-env'
+import { loadMergedEnv } from '@mono-labs/project'
 
 loadMergedEnv()
 //cdk deploy --context owner=cody --context region=us-west-1
@@ -26,7 +26,7 @@ export abstract class CustomStack extends cdk.Stack {
   protected enableNATGateway: boolean = false
 
   constructor(scope: Construct, id: string, props: CustomStackProps = {}) {
-    // 🔑 Resolve account + region BEFORE super()
+    // Resolve account + region BEFORE super()
     const resolvedEnv: cdk.Environment | undefined = {
       account: props.env?.account ?? process.env.AWS_ACCOUNT ?? cdk.Aws.ACCOUNT_ID, // final fallback (lazy token)
       region: props.env?.region ?? process.env.AWS_REGION ?? 'us-east-2',
@@ -37,7 +37,7 @@ export abstract class CustomStack extends cdk.Stack {
       env: resolvedEnv,
     })
 
-    // ✅ Now it’s safe to read these
+    // Now it's safe to read these
     this.ownerName = props.ownerName ?? 'dev'
     this.domainName = props.domainName
     this.region = resolvedEnv.region!

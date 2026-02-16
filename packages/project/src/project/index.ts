@@ -138,7 +138,7 @@ export function loadAppConfig<TCustom = unknown, TType extends string = 'app'>(
 ): { config: ResolveConfig<TType, TCustom>; meta: WorkspaceDetectResult } {
   const fileName = `mono.${configType}.json`
 
-  // ✅ 1. Lambda runtime: load bundled config if present
+  // 1. Lambda runtime: load bundled config if present
   if (isLambdaRuntime()) {
     const bundled = loadConfigFromBundle(fileName)
 
@@ -156,7 +156,7 @@ export function loadAppConfig<TCustom = unknown, TType extends string = 'app'>(
     }
   }
 
-  // ✅ 2. CLI / local dev: workspace discovery
+  // 2. CLI / local dev: workspace discovery
   const meta = detectWorkspaceAndConfigPath(startDir, fileName)
 
   if (!fs.existsSync(meta.configPath)) {
@@ -168,7 +168,7 @@ export function loadAppConfig<TCustom = unknown, TType extends string = 'app'>(
   const raw = fs.readFileSync(meta.configPath, 'utf8')
   const config = JSON.parse(raw) as ResolveConfig<TType, TCustom>
 
-  // ✅ Apply required system defaults
+  // Apply required system defaults
   if (typeof config === 'object' && config !== null) {
     for (const key of Object.keys(requiredSystemDefaults)) {
       // @ts-ignore: index signature

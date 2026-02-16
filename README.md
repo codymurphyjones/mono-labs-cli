@@ -1,123 +1,78 @@
-# mono-labs
+# Mono
 
-Declarative monorepo orchestration, project tooling, and infrastructure
-integration — built to scale real systems, not just scripts.
+A declarative CLI for monorepo orchestration. Define commands as JSON, run them with `yarn mono`.
 
----
+## What is Mono?
 
-## What This Is
-
-mono-labs is a monorepo control plane.
-
-It combines:
-
-- a declarative, token-aware CLI runtime
-- project-level orchestration utilities
-- infrastructure and CI integration primitives
-
-The goal is to make a monorepo behave like a single, coordinated system across:
-
-- local development
-- CI pipelines
-- deployments
-- infrastructure management
-
----
-
-## What Problems It Solves
-
-Most monorepos suffer from:
-
-- duplicated scripts across packages
-- environment drift between dev and CI
-- infrastructure logic isolated in pipelines
-- brittle bash scripts
-- slow onboarding
-
-mono-labs solves this by providing:
-
-- declarative command definitions
-- shared runtime state via tokens
-- reusable project utilities
-- programmatic CDK helpers
-- one mental model for dev, CI, and deploy
-
----
-
-## High-Level Architecture
-
-mono-labs is intentionally layered:
-
-1. `.mono/` Declarative command definitions (JSON).
-
-2. CLI Runtime (`bin` + `lib`) Loads `.mono`, builds commands, executes
-   workflows, manages processes.
-
-3. Project Orchestration (`src/project`) Environment merging, configuration
-   management, monorepo utilities.
-
-4. Infrastructure Integration (`src/cdk`) CDK helpers, stack orchestration,
-   CI-friendly deployment primitives.
-
-Each layer can be used independently, but they are designed to work together.
-
----
+Mono lets you define complex CLI commands as simple JSON files in a `.mono/` directory. Run `yarn mono <command>` to execute them with built-in support for environments, preactions, background processes, and workspace management. One mental model for dev, CI, and deploy.
 
 ## Quick Start
 
-Create a `.mono` directory and add:
+Install the CLI as a dev dependency:
 
-.mono/hello.json
+```bash
+yarn add -D @mono-labs/cli
+```
 
-{ "actions": ["echo Hello World"] }
+Create a `.mono/` directory at your project root and add a command definition:
 
-Run:
+```jsonc
+// .mono/dev.json
+{
+  "preactions": ["docker compose up -d"],
+  "actions": [
+    "yarn workspace backend serve",
+    "yarn workspace web dev"
+  ],
+  "environments": {
+    "dev": {
+      "API_URL": "http://localhost:3000"
+    }
+  }
+}
+```
 
-yarn mono hello
+Run it:
 
----
+```bash
+yarn mono dev
+```
 
-## Typical Developer Workflow
+## Core Concepts
 
-yarn mono dev yarn mono serve yarn mono mobile
+- **`.mono/` directory** -- JSON files that define commands, placed at your project root
+- **Command definitions** -- Each `.json` file becomes a CLI command with arguments, options, and environment configs
+- **Environments** -- Define `dev`, `stage`, and `prod` environment variable sets per command
+- **Preactions & actions** -- Preactions run sequentially first; actions run in parallel with the last one in the foreground
+- **Token system** -- Capture output from preactions with `{out:field value}` and inject via `${field}` in environments and actions
+- **Workspace mappings** -- Alias workspace names and run workspace commands with `yarn mono <alias> <script>`
 
-If unsure:
+## Packages
 
-yarn mono help
+| Package | Description |
+|---------|-------------|
+| [`@mono-labs/cli`](packages/cli/README.md) | The CLI runtime -- reads `.mono/` definitions and executes commands |
+| [`@mono-labs/project`](packages/project/README.md) | Project config & env utilities -- root discovery, `.mono` config loading, env merging |
+| [`@mono-labs/expo`](packages/expo/README.md) | Expo/EAS build utilities -- env filtering, config setup, token replacement |
 
----
+## Documentation
 
-## Documentation Index
+- [Getting Started Guide](docs/getting-started.md) -- Detailed walkthrough of setup, configuration, and command definitions
+- [Contributing](CONTRIBUTING.md) -- Local dev setup, PR process, and repo structure
 
-Start here:
+### Internal Reference
 
-- docs/README.txt
+- [Architecture](docs/architecture.md) -- How the CLI works internally
+- [Configuration Reference](docs/configuration.md) -- Full `.mono/` config schema
+- [Examples & Walkthroughs](docs/examples.md) -- Real-world usage scenarios
+- [Troubleshooting](docs/troubleshooting.md)
+- [Project Orchestration](docs/project-orchestration.md)
+- [Infrastructure Integration](docs/infrastructure-integration.md)
 
-Key docs:
+## CDK
 
-- docs/architecture.md
-- docs/configuration.md
-- docs/examples.md
-- docs/troubleshooting.md
-
-Advanced:
-
-- docs/project-orchestration.md
-- docs/infrastructure-integration.md
-
----
-
-## Who This Is For
-
-mono-labs is designed for teams that:
-
-- run full-stack systems
-- manage real infrastructure
-- care about reproducibility
-- want dev and CI to behave the same
-
----
+Mono includes experimental CDK integration for infrastructure-as-code. See [CDK docs](docs/cdk.md).
 
 ## License
 
-MIT © Contributors
+MIT

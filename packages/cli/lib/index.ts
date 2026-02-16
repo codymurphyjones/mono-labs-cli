@@ -1,4 +1,4 @@
-import { loadMergedEnv } from '../src/merge-env'
+import { loadMergedEnv } from '@mono-labs/project'
 
 import { spawn } from 'node:child_process'
 import os from 'node:os'

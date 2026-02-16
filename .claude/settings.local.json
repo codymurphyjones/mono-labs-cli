@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e \"const e = require\\(''@mono-labs/cli/expo''\\); console.log\\(''cli/expo:'', Object.keys\\(e\\)\\)\")",
+      "Bash(node -e:*)",
+      "Bash(yarn workspace:*)",
+      "Bash(cd:*)",
+      "Bash(for f in \"docs/getting-started.md\" \"CONTRIBUTING.md\" \"packages/cli/README.md\" \"packages/project/README.md\" \"packages/expo/README.md\" \"docs/cdk.md\" \"docs/architecture.md\" \"docs/configuration.md\" \"docs/examples.md\" \"docs/troubleshooting.md\" \"docs/project-orchestration.md\" \"docs/infrastructure-integration.md\" \"README.md\")",
+      "Bash(do)",
+      "Bash(if [ -f \"$f\" ])",
+      "Bash(then)",
+      "Bash(echo:*)",
+      "Bash(else)",
+      "Bash(fi)",
+      "Bash(done)"
+    ]
+  }
+}

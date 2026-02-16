@@ -1,4 +1,4 @@
-import { getMonoConfig } from '../loadFromRoot'
+import { getMonoConfig } from '@mono-labs/project'
 
 export function filterUnwantedEnvVars(env: Record<string, string>) {
   const unwantedPrefixes = [

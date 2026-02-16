@@ -1,6 +1,6 @@
 import { spawn } from 'child_process'
 import { replaceTokens, setData } from '../dataLayer'
-import { filterUnwantedEnvVars } from '../../../../lib/filterUnwantedEnvVars'
+import { filterUnwantedEnvVars } from '../../../filterUnwantedEnvVars'
 
 // Regex to capture tokens like: {out:field value}
 const TOKEN_RX = /\{out:(?<field>[^\s}]+)\s+(?<value>[^\s}]+)\}/g

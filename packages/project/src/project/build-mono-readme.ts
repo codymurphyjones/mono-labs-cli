@@ -202,15 +202,12 @@ type MonoConfig = {
 }
 
 function parseOptionsSchema(optionsObj: unknown): OptionSchema[] {
-  // New structure supports:
-  // - optionKey: { type: "string", default, options: [], allowAll, shortcut, description }
-  // - boolean toggle: { shortcut, description } (no type)
   if (!isObject(optionsObj)) return []
 
   const entries: OptionSchema[] = Object.entries(optionsObj).map(([key, raw]) => {
     const o = isObject(raw) ? raw : {}
     const hasType = typeof o.type === 'string' && o.type.trim().length > 0
-    const isBoolToggle = !hasType // in your examples, booleans omit `type`
+    const isBoolToggle = !hasType
     return {
       key,
       kind: isBoolToggle ? 'boolean' : 'value',
@@ -232,14 +229,12 @@ function buildUsageExample(commandName: string, cmdJson: any, options: OptionSch
   const hasArg = isObject(arg)
   const argToken = hasArg ? `<${commandName}-arg>` : ''
 
-  // choose a representative value option to show
   const valueOpts = options.filter((o) => o.kind === 'value')
   const boolOpts = options.filter((o) => o.kind === 'boolean')
 
   const exampleParts = [`yarn mono ${commandName}`]
   if (argToken) exampleParts.push(argToken)
 
-  // include at most 2 value options and 1 boolean in the example for readability
   for (const o of valueOpts.slice(0, 2)) {
     const flag = `--${o.key}`
     const val = o.default !== undefined ? o.default : (o.allowed?.[0] ?? '<value>')
