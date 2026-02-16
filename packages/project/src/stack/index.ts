@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib'
 import { Construct } from 'constructs'
-import { loadMergedEnv } from '@mono-labs/project'
+import { loadMergedEnv } from '../project/index'
 
 loadMergedEnv()
 //cdk deploy --context owner=cody --context region=us-west-1

@@ -13,3 +13,4 @@ packages/*/dist/
 *.tar.gz
 .yarn/*
 
+*.tsbuildinfo

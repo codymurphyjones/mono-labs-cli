@@ -43,8 +43,6 @@ export type BootResult = {
   config: MonoConfig
 }
 
-export { generateNewEnvList } from './lib/generateNewEnvList'
-export { filterUnwantedEnvVars, filterUnwantedEnvVarsEAS } from './lib/filterUnwantedEnvVars'
 export {
   replaceTokens,
   setData,
@@ -59,14 +57,9 @@ export { buildCommands } from './lib/commands/build-process/cliFactory'
 export { runMonoCommand } from './lib/commands/build-process/runMonoCommand'
 export { verifyOptionValue } from './lib/commands/build-process/validators'
 
-import { generateNewEnvList } from './lib/generateNewEnvList'
-import { filterUnwantedEnvVars, filterUnwantedEnvVarsEAS } from './lib/filterUnwantedEnvVars'
 import { replaceTokens } from './lib/commands/build-process/dataLayer'
 
 // Default export for convenience
 export default {
   replaceTokens,
-  generateNewEnvList,
-  filterUnwantedEnvVars,
-  filterUnwantedEnvVarsEAS,
 }

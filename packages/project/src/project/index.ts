@@ -185,3 +185,4 @@ export function loadAppConfig<TCustom = unknown, TType extends string = 'app'>(
 export const loadProjectConfig = loadAppConfig
 
 export { loadMergedEnv } from './merge-env'
+export { filterEnvByPrefixes, filterEnvByConfig } from './filter-env'

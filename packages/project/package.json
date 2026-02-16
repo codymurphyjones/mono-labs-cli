@@ -15,6 +15,11 @@
       "types": "./dist/project/index.d.ts",
       "require": "./dist/project/index.js",
       "default": "./dist/project/index.js"
+    },
+    "./stack": {
+      "types": "./dist/stack/index.d.ts",
+      "require": "./dist/stack/index.js",
+      "default": "./dist/stack/index.js"
     }
   },
   "scripts": {
@@ -29,8 +34,22 @@
   "dependencies": {
     "dotenv": "^17.2.0"
   },
+  "peerDependencies": {
+    "aws-cdk-lib": "^2.235.0",
+    "constructs": "^10.4.5"
+  },
+  "peerDependenciesMeta": {
+    "aws-cdk-lib": {
+      "optional": true
+    },
+    "constructs": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@types/node": "^25.1.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "aws-cdk-lib": "^2.235.0",
+    "constructs": "^10.4.5"
   }
 }

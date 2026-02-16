@@ -38,16 +38,11 @@ yarn mono config list
 
 ## Exports
 
-The package provides several subpath exports for use in other packages:
+The package provides the following export:
 
 | Export | Description |
 |--------|-------------|
-| `@mono-labs/cli` | Core utilities: `setData`, `getData`, `mergeData`, `hasData`, `replaceTokens`, `generateNewEnvList`, `filterUnwantedEnvVars`, `filterUnwantedEnvVarsEAS`, `boot`, `getMonoConfig`, `getRootDirectory`, `getRootJson`, `buildCommands`, `runMonoCommand`, `verifyOptionValue` |
-| `@mono-labs/cli/project` | Re-exports from `@mono-labs/project`: `findProjectRoot`, `getRootDirectory`, `getRootJson`, `resolveMonoDirectory`, `getMonoFiles`, `getMonoConfig`, `loadAppConfig`, `loadProjectConfig`, `loadMergedEnv` |
-| `@mono-labs/cli/expo` | Re-exports from `@mono-labs/expo`: `replaceTokens`, `setUpConfig`, `filterUnwantedEnvVarsEAS` |
-| `@mono-labs/cli/tools` | Tooling utilities: `replaceTokens`, `setUpConfig` |
-| `@mono-labs/cli/cdk` | CDK helpers: `replaceTokens`, `setUpConfig` |
-| `@mono-labs/cli/stack` | `CustomStack` abstract class for AWS CDK stacks |
+| `@mono-labs/cli` | Core utilities: `setData`, `getData`, `mergeData`, `hasData`, `replaceTokens`, `boot`, `getMonoConfig`, `getRootDirectory`, `getRootJson`, `buildCommands`, `runMonoCommand`, `verifyOptionValue` |
 
 ### Core API
 
@@ -58,9 +53,6 @@ import {
   mergeData,
   hasData,
   replaceTokens,
-  generateNewEnvList,
-  filterUnwantedEnvVars,
-  filterUnwantedEnvVarsEAS
 } from "@mono-labs/cli";
 ```
 
@@ -74,12 +66,6 @@ import {
 **Token Replacement:**
 
 - `replaceTokens(str, env)` -- Replace `${key}` and `$KEY` patterns in a string using the data layer and environment
-
-**Environment Utilities:**
-
-- `generateNewEnvList(processEnv)` -- Map `MONO_*` vars to configured prefixes via `envMap`
-- `filterUnwantedEnvVars(env)` -- Minimal env var filtering for local dev
-- `filterUnwantedEnvVarsEAS(env)` -- Aggressive env var filtering for EAS builds
 
 ### Types
 

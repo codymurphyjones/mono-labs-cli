@@ -99,14 +99,19 @@ export function getMonoFiles(): string[] {
 		.map((f) => path.join(dir, f));
 }
 
+let _monoConfigCache: MonoConfig | null = null;
+
 /**
  * Load and validate mono configuration.
+ * Results are cached — subsequent calls return the same object.
  */
 export function getMonoConfig(): MonoConfig {
+	if (_monoConfigCache) return _monoConfigCache;
+
 	const monoDir = resolveMonoDirectory();
 
 	if (!monoDir) {
-		return {
+		_monoConfigCache = {
 			files: {},
 			config: {
 				envMap: [],
@@ -114,6 +119,7 @@ export function getMonoConfig(): MonoConfig {
 				prodFlag: 'live',
 			},
 		};
+		return _monoConfigCache;
 	}
 
 	const files: MonoFiles = {};
@@ -141,5 +147,10 @@ export function getMonoConfig(): MonoConfig {
 		}
 	}
 
-	return { files, config };
+	_monoConfigCache = { files, config };
+	return _monoConfigCache;
+}
+
+export function clearMonoConfigCache(): void {
+	_monoConfigCache = null;
 }

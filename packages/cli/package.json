@@ -10,31 +10,6 @@
       "types": "./dist/index.d.ts",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
-    },
-    "./expo": {
-      "types": "./dist/src/expo.d.ts",
-      "require": "./dist/src/expo.js",
-      "default": "./dist/src/expo.js"
-    },
-    "./tools": {
-      "types": "./dist/src/tools.d.ts",
-      "require": "./dist/src/tools.js",
-      "default": "./dist/src/tools.js"
-    },
-    "./cdk": {
-      "types": "./dist/src/cdk.d.ts",
-      "require": "./dist/src/cdk.js",
-      "default": "./dist/src/cdk.js"
-    },
-    "./stack": {
-      "types": "./dist/src/stack.d.ts",
-      "require": "./dist/src/stack.js",
-      "default": "./dist/src/stack.js"
-    },
-    "./project": {
-      "types": "./dist/src/project.d.ts",
-      "require": "./dist/src/project.js",
-      "default": "./dist/src/project.js"
     }
   },
   "repository": {
@@ -71,7 +46,6 @@
   },
   "dependencies": {
     "@mono-labs/project": "0.1.249",
-    "@mono-labs/expo": "0.1.249",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
     "cross-spawn": "^7.0.6",
@@ -80,38 +54,9 @@
     "prettier": "^3.6.2",
     "tree-kill": "^1.2.2"
   },
-  "peerDependencies": {
-    "aws-cdk-lib": "^2.235.0",
-    "constructs": "^10.4.5",
-    "@aws-sdk/client-dynamodb": "^3.848.0",
-    "@aws-sdk/util-dynamodb": "^3.848.0",
-    "expo": ">=52"
-  },
-  "peerDependenciesMeta": {
-    "aws-cdk-lib": {
-      "optional": true
-    },
-    "constructs": {
-      "optional": true
-    },
-    "@aws-sdk/client-dynamodb": {
-      "optional": true
-    },
-    "@aws-sdk/util-dynamodb": {
-      "optional": true
-    },
-    "expo": {
-      "optional": true
-    }
-  },
   "devDependencies": {
     "@types/node": "^25.1.0",
-    "typescript": "^5.9.3",
-    "aws-cdk-lib": "^2.235.0",
-    "constructs": "^10.4.5",
-    "@aws-sdk/client-dynamodb": "^3.848.0",
-    "@aws-sdk/util-dynamodb": "^3.848.0",
-    "expo": ">=52"
+    "typescript": "^5.9.3"
   },
   "files": [
     "bin/",

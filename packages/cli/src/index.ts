@@ -1,11 +1,5 @@
 // Main entry point for @mono-labs/cli package
 
-import {
-  filterUnwantedEnvVars,
-  filterUnwantedEnvVarsEASExpo as filterUnwantedEnvVarsEAS,
-  generateNewEnvList,
-} from '@mono-labs/expo'
-
 /* ------------------------------------------------------------------
  * Internal data layer
  * ------------------------------------------------------------------ */
@@ -63,11 +57,6 @@ export function replaceTokens(str: unknown, env?: Record<string, string | undefi
  * Exports
  * ------------------------------------------------------------------ */
 
-export { generateNewEnvList, filterUnwantedEnvVars, filterUnwantedEnvVarsEAS }
-
 export default {
-  generateNewEnvList,
   replaceTokens,
-  filterUnwantedEnvVars,
-  filterUnwantedEnvVarsEAS,
 }

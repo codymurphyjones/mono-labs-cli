@@ -7,6 +7,7 @@ export {
   resolveMonoDirectory,
   getMonoFiles,
   getMonoConfig,
+  clearMonoConfigCache,
 } from './loadFromRoot'
 
 export type {
@@ -16,4 +17,4 @@ export type {
   MonoConfig,
 } from './loadFromRoot'
 
-export { loadAppConfig, loadProjectConfig, loadMergedEnv } from './project/index'
+export { loadAppConfig, loadProjectConfig, loadMergedEnv, filterEnvByPrefixes, filterEnvByConfig } from './project/index'
