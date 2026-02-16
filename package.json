@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "mono-labs",
-  "version": "0.0.246",
+  "version": "0.1.1",
   "workspaces": [
     "packages/*"
   ],
@@ -12,6 +12,8 @@
     "build:expo": "yarn workspace @mono-labs/expo build",
     "build:cli": "yarn workspace @mono-labs/cli build",
     "version:bump": "node scripts/bump-version.js",
+    "version:up": "node scripts/bump-version.js minor",
+    "version:major": "node scripts/bump-version.js major",
     "deploy": "node scripts/bump-version.js && git add package.json packages/*/package.json && git commit -m \"$(node -e \"process.stdout.write(require('./package.json').version)\")\" && yarn workspace @mono-labs/project deploy && yarn workspace @mono-labs/expo deploy && yarn workspace @mono-labs/cli deploy"
   },
   "devDependencies": {

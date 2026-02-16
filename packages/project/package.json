@@ -1,6 +1,6 @@
 {
   "name": "@mono-labs/project",
-  "version": "0.0.246",
+  "version": "0.1.1",
   "type": "commonjs",
   "description": "Project configuration utilities for mono-labs",
   "main": "dist/index.js",
