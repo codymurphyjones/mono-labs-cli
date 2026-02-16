@@ -1,0 +1,123 @@
+{
+  "name": "@mono-labs/cli",
+  "version": "0.0.247",
+  "type": "commonjs",
+  "description": "A CLI tool for building and deploying projects",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./expo": {
+      "types": "./dist/src/expo.d.ts",
+      "require": "./dist/src/expo.js",
+      "default": "./dist/src/expo.js"
+    },
+    "./tools": {
+      "types": "./dist/src/tools.d.ts",
+      "require": "./dist/src/tools.js",
+      "default": "./dist/src/tools.js"
+    },
+    "./cdk": {
+      "types": "./dist/src/cdk.d.ts",
+      "require": "./dist/src/cdk.js",
+      "default": "./dist/src/cdk.js"
+    },
+    "./stack": {
+      "types": "./dist/src/stack.d.ts",
+      "require": "./dist/src/stack.js",
+      "default": "./dist/src/stack.js"
+    },
+    "./project": {
+      "types": "./dist/src/project.d.ts",
+      "require": "./dist/src/project.js",
+      "default": "./dist/src/project.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codymurphyjones/mono-labs-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/codymurphyjones/mono-labs-cli/issues"
+  },
+  "homepage": "https://github.com/codymurphyjones/mono-labs-cli#readme",
+  "bin": {
+    "mono": "./bin/mono.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node bin/mono.js",
+    "dev": "node bin/mono.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "tsc && npm publish --access public --registry https://registry.npmjs.org/",
+    "release:patch": "npm version patch -m \"chore: release %s\" && npm publish --access public",
+    "release:minor": "npm version minor -m \"chore: release %s\" && npm publish --access public",
+    "release:major": "npm version major -m \"chore: release %s\" && npm publish --access public"
+  },
+  "keywords": [
+    "cli",
+    "build",
+    "deploy",
+    "tool"
+  ],
+  "author": "Cody Jones",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@mono-labs/project": "0.0.247",
+    "@mono-labs/expo": "0.0.247",
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "cross-spawn": "^7.0.6",
+    "dotenv": "^17.2.0",
+    "inquirer": "^12.8.2",
+    "prettier": "^3.6.2",
+    "tree-kill": "^1.2.2"
+  },
+  "peerDependencies": {
+    "aws-cdk-lib": "^2.235.0",
+    "constructs": "^10.4.5",
+    "@aws-sdk/client-dynamodb": "^3.848.0",
+    "@aws-sdk/util-dynamodb": "^3.848.0",
+    "expo": ">=52"
+  },
+  "peerDependenciesMeta": {
+    "aws-cdk-lib": {
+      "optional": true
+    },
+    "constructs": {
+      "optional": true
+    },
+    "@aws-sdk/client-dynamodb": {
+      "optional": true
+    },
+    "@aws-sdk/util-dynamodb": {
+      "optional": true
+    },
+    "expo": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^25.1.0",
+    "typescript": "^5.9.3",
+    "aws-cdk-lib": "^2.235.0",
+    "constructs": "^10.4.5",
+    "@aws-sdk/client-dynamodb": "^3.848.0",
+    "@aws-sdk/util-dynamodb": "^3.848.0",
+    "expo": ">=52"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "src/",
+    "dist/",
+    "README.md"
+  ]
+}

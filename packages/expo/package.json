@@ -1,0 +1,50 @@
+{
+  "name": "@mono-labs/expo",
+  "version": "0.0.247",
+  "type": "commonjs",
+  "description": "Expo and CDK utilities for mono-labs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./tools": {
+      "types": "./dist/tools.d.ts",
+      "require": "./dist/tools.js",
+      "default": "./dist/tools.js"
+    },
+    "./cdk": {
+      "types": "./dist/cdk/index.d.ts",
+      "require": "./dist/cdk/index.js",
+      "default": "./dist/cdk/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "tsc && npm publish --access public --registry https://registry.npmjs.org/",
+    "release:patch": "npm version patch -m \"chore: release %s\" && npm publish --access public",
+    "release:minor": "npm version minor -m \"chore: release %s\" && npm publish --access public",
+    "release:major": "npm version major -m \"chore: release %s\" && npm publish --access public"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@mono-labs/project": "0.0.247"
+  },
+  "peerDependencies": {
+    "expo": ">=52"
+  },
+  "peerDependenciesMeta": {
+    "expo": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^25.1.0",
+    "typescript": "^5.9.3",
+    "expo": ">=52"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "@mono-labs/project",
+  "version": "0.0.247",
+  "type": "commonjs",
+  "description": "Project configuration utilities for mono-labs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./project": {
+      "types": "./dist/project/index.d.ts",
+      "require": "./dist/project/index.js",
+      "default": "./dist/project/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "tsc && npm publish --access public --registry https://registry.npmjs.org/",
+    "release:patch": "npm version patch -m \"chore: release %s\" && npm publish --access public",
+    "release:minor": "npm version minor -m \"chore: release %s\" && npm publish --access public",
+    "release:major": "npm version major -m \"chore: release %s\" && npm publish --access public"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^17.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.1.0",
+    "typescript": "^5.9.3"
+  }
+}
