@@ -37,6 +37,7 @@ import {
 - **`resolveMonoDirectory()`** -- Resolves the path to the `.mono/` directory (checks project root and cwd).
 - **`getMonoFiles()`** -- Returns a `MonoFiles` record of all `.mono/*.json` command definitions (excluding `config.json`).
 - **`getMonoConfig()`** -- Loads and returns the parsed `.mono/config.json` as a `MonoConfig` object.
+- **`clearMonoConfigCache()`** -- Clears the cached mono config, forcing a fresh read on the next call to `getMonoConfig()`.
 
 ### App Configuration
 
@@ -58,9 +59,21 @@ import { loadMergedEnv } from "@mono-labs/project";
 
 - **`loadMergedEnv()`** -- Loads `.env` and `.env.local` from the project root, merges them (`.env.local` takes precedence), and injects into `process.env` without overwriting existing variables.
 
+### Environment Filtering
+
+```typescript
+import {
+  filterEnvByPrefixes,
+  filterEnvByConfig
+} from "@mono-labs/project";
+```
+
+- **`filterEnvByPrefixes(env, prefixes, include?)`** -- Returns only env vars whose keys start with one of the given prefixes. Pass an optional `include` array for specific keys that should always be kept regardless of prefix.
+- **`filterEnvByConfig(env?, include?)`** -- Reads prefixes from `.mono/config.json` `envMap` and combines them with default prefixes (`MONO_`, `EAS_`, `APP_`, `TAMAGUI_`). Defaults to `process.env` if `env` is omitted.
+
 ### Subpath Export
 
-The `@mono-labs/project/project` subpath provides access to app config loading and documentation generation utilities.
+The `@mono-labs/project/project` subpath provides access to app config loading, environment filtering, and documentation generation utilities.
 
 ## Config Types
 

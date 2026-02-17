@@ -1,113 +1,125 @@
-# CDK Foundation Components & Project Integration Tools
+# CDK Foundation & Project Integration
 
 ## Overview
 
-This document focuses on the unique roles of the `src/cdk` and `src/project`
-folders in the Mono Labs CLI codebase. Unlike the CLI command logic, these
-folders provide foundational components for infrastructure-as-code (CDK) and
-project-level integration utilities.
+CDK and project utilities live in `@mono-labs/project` under two subpath exports:
+- `@mono-labs/project/stack` -- Infrastructure definition (CDK)
+- `@mono-labs/project/project` -- Configuration loading and environment management
+
+These handle complementary responsibilities: CDK defines _what_ infrastructure
+looks like, while project utilities load _how_ the application is configured at
+runtime.
 
 ---
 
-## src/cdk: CDK Foundation Components
+## CDK: `packages/project/src/stack/index.ts`
 
-### Purpose
+Provides `CustomStack`, an abstract base class extending `cdk.Stack` with
+mono-labs conventions for multi-owner, multi-region deployments.
 
-- Provides integration with AWS CDK (Cloud Development Kit) or similar
-  infrastructure-as-code frameworks.
-- Encapsulates logic for defining, synthesizing, and deploying cloud
-  infrastructure as code.
+### `CustomStack`
 
-### Key Files
+```typescript
+abstract class CustomStack extends cdk.Stack {
+  public ownerName: string
+  public region: string
+  public domainName?: string
+  protected enableNATGateway: boolean
 
-- **cdk.d.ts**: TypeScript type definitions for CDK-related modules, ensuring
-  type safety and better developer experience.
-- **index.js**: Main entry point for CDK operations, likely exporting functions
-  to:
-  - Define infrastructure stacks
-  - Synthesize CloudFormation templates
-  - Deploy or destroy cloud resources
+  constructor(scope: Construct, id: string, props?: CustomStackProps)
+  public initializeStackConfig(): void
+}
+```
 
-### Unique Goals
+**Constructor behavior:**
+- Resolves AWS account from `props.env.account` -> `AWS_ACCOUNT` env var -> `cdk.Aws.ACCOUNT_ID`
+- Resolves region from `props.env.region` -> `AWS_REGION` env var -> `us-east-2` (default)
+- Sets `ownerName` from props (defaults to `'dev'`)
+- Calls `loadMergedEnv()` at module load time to inject `.env` values
 
-- Abstracts cloud infrastructure logic away from CLI command handling.
-- Enables programmatic infrastructure management and automation.
-- Provides a foundation for scalable, repeatable cloud deployments.
+**`initializeStackConfig()`:**
+- Reads CDK context overrides: `--context owner=<name>`, `--context region=<region>`, `--context enableNATGateway=<bool>`
+- Production owners (`prod`/`production`) enable NAT Gateway by default
 
-### Example Use Cases
+### `CustomStackProps`
 
-- Define a new AWS Lambda function or S3 bucket in code.
-- Synthesize and deploy infrastructure with a single command or script.
-- Integrate infrastructure changes into CI/CD pipelines.
+```typescript
+interface CustomStackProps extends cdk.StackProps {
+  ownerName?: string
+  region?: string
+  enableNATGateway?: boolean
+  domainName?: string
+}
+```
+
+### Usage
+
+```typescript
+import { CustomStack, CustomStackProps } from '@mono-labs/project/stack'
+
+class MyStack extends CustomStack {
+  constructor(scope: Construct, id: string, props?: CustomStackProps) {
+    super(scope, id, props)
+    this.initializeStackConfig()
+    // Define resources...
+  }
+}
+```
 
 ---
 
-## src/project: Project Integration Tools
+## Project Utilities: `packages/project/src/project/`
 
-### Purpose
+### App Configuration
 
-- Provides utilities and helpers for project-level integration, configuration,
-  and orchestration.
-- Focuses on managing project settings, environment merging, and integration
-  with other tools or services.
+```typescript
+import { loadAppConfig, loadProjectConfig } from '@mono-labs/project/project'
+```
 
-### Key Files
+**`loadAppConfig(configType?, startDir?)`** loads typed config files
+(`mono.app.json`, `mono.deployment.json`, etc.) with two modes:
 
-- **index.ts**: Main entry point for project integration logic, likely exporting
-  functions to:
-  - Initialize or configure project settings
-  - Integrate with external services or APIs
-  - Orchestrate project-level workflows
-- **merge-env.ts**: Handles merging of environment variables and configuration
-  files, supporting multi-environment setups.
+1. **Local development** -- Walks up from `startDir` to find the workspace root,
+   then resolves the config file relative to the project directory.
+2. **Lambda runtime** -- Detects the Lambda environment and loads bundled config
+   from the function's directory.
 
-### Unique Goals
+Returns `{ config, meta }` where `meta` includes workspace detection details.
 
-- Simplifies project setup and integration for developers.
-- Ensures consistent environment management across different stages
-  (development, staging, production).
-- Provides reusable utilities for project orchestration and automation.
+`loadProjectConfig` is an alias for `loadAppConfig`.
 
-### Example Use Cases
+### Environment Merging
 
-- Merge multiple `.env` files for a unified configuration.
-- Initialize project settings for a new environment or deployment target.
-- Integrate with third-party APIs or services as part of project setup.
+```typescript
+import { loadMergedEnv } from '@mono-labs/project/project'
+```
+
+**`loadMergedEnv()`** reads `.env` and `.env.local` from the project root, merges
+them (`.env.local` takes precedence), and injects into `process.env` without
+overwriting existing variables.
+
+### Environment Filtering
+
+```typescript
+import { filterEnvByPrefixes, filterEnvByConfig } from '@mono-labs/project/project'
+```
+
+**`filterEnvByPrefixes(env, prefixes, include?)`** returns only env vars whose keys
+start with one of the given prefixes (or are in the `include` list).
+
+**`filterEnvByConfig(env?, include?)`** reads prefixes from `.mono/config.json`
+`envMap` and combines them with default prefixes (`MONO_`, `EAS_`, `APP_`,
+`TAMAGUI_`).
 
 ---
 
 ## Architectural Distinction
 
-- **src/cdk** is focused on infrastructure-as-code and cloud resource
-  management, serving as the foundation for automated deployments.
-- **src/project** is focused on project-level integration, configuration, and
-  orchestration, ensuring smooth developer workflows and environment
-  consistency.
-- Both modules are designed to be used programmatically or as part of larger
-  automation scripts, rather than as direct CLI commands.
+| Concern | Module | Responsibility |
+|---------|--------|---------------|
+| Infrastructure _definition_ | `@mono-labs/project/stack` | Abstract CDK base class, region/owner resolution, NAT Gateway config |
+| Configuration _loading_ | `@mono-labs/project/project` | Config file discovery (local + Lambda), env merging, env filtering |
 
----
-
-## Troubleshooting & Recommendations
-
-- **CDK Issues:**
-  - Ensure AWS credentials and region are configured before running CDK
-    operations.
-  - Validate stack definitions and type safety using `cdk.d.ts`.
-- **Project Integration Issues:**
-  - Double-check environment variable merging logic for conflicts or missing
-    values.
-  - Use type definitions and helper functions in `project` to avoid
-    misconfiguration.
-- **General:**
-  - Review inline documentation and type definitions for usage patterns and
-    integration points.
-
----
-
-## Conclusion
-
-The `src/cdk` and `src/project` folders provide the foundation for
-infrastructure and project integration in Mono Labs CLI, enabling scalable,
-automated, and consistent development and deployment workflows. For detailed
-usage, refer to the code and type definitions within each module.
+Both are exported from `@mono-labs/project` via subpath exports and share no
+runtime state. CDK stacks call `loadMergedEnv()` at import time to ensure
+environment variables are available during synthesis.

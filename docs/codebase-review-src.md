@@ -1,139 +1,218 @@
-# Mono Labs CLI: Codebase Review & Documentation
+# Codebase Source Review (`packages/`)
 
 ## Overview
 
-This document provides a comprehensive review of the `src` directory and its
-subdirectories in the Mono Labs CLI project. It lists the functions in each
-file, summarizes their purposes, and offers insights into the architecture,
-configuration, usage examples, and troubleshooting recommendations.
+This document describes the source layout of the mono-labs monorepo. The codebase is
+organized as a yarn workspaces monorepo with four packages under `packages/`. Each
+package has its own `src/` directory containing TypeScript source files.
 
 ---
 
-## Directory Structure
+## Package Map
 
-- **src/**
-  - expo.d.ts
-  - expo.js
-  - merge-env.js
-  - stack.ts
-  - tools.d.ts
-  - tools.js
-  - cdk/
-    - cdk.d.ts
-    - index.js
-  - project/
-    - index.ts
-    - merge-env.ts
+| Package | Directory | Description |
+|---------|-----------|-------------|
+| `@mono-labs/cli` | `packages/cli/` | CLI runtime -- reads `.mono/` definitions and executes commands |
+| `@mono-labs/project` | `packages/project/` | Project config & env utilities -- root discovery, config loading, env merging |
+| `@mono-labs/expo` | `packages/expo/` | Expo/EAS build utilities -- env filtering, config setup, token replacement |
+| `@mono-labs/dev` | `packages/dev/` | Local dev server & WebSocket adapter -- Lambda mapping, Redis caching |
 
 ---
 
-## File-by-File Review
+## `packages/cli/src/`
 
-### 1. expo.js / expo.d.ts
+Minimal public API surface. The bulk of CLI logic lives in `lib/` (see
+[lib-review.md](lib-review.md)).
 
-- **Purpose:** Likely provides utilities or interfaces for working with Expo
-  projects.
-- **Functions:**
-  - Functions for managing Expo configuration, environment, or project setup.
-- **Notes:** Type definitions in `expo.d.ts` support TypeScript consumers.
+### `index.ts`
 
-### 2. merge-env.js / merge-env.ts
+Exports data-layer utilities for programmatic use:
 
-- **Purpose:** Handles merging of environment variables or configuration files.
-- **Functions:**
-  - Functions to read, merge, and write environment files.
-  - Likely supports both JavaScript and TypeScript usage.
-
-### 3. stack.ts
-
-- **Purpose:** Implements a stack data structure or manages deployment stacks.
-- **Functions:**
-  - Stack manipulation (push, pop, etc.)
-  - Possibly used for managing deployment or build stacks.
-
-### 4. tools.js / tools.d.ts
-
-- **Purpose:** Utility functions for the CLI.
-- **Functions:**
-  - General-purpose helpers (file operations, logging, etc.)
-  - Type definitions in `tools.d.ts`.
-
-### 5. cdk/index.js / cdk.d.ts
-
-- **Purpose:** Integrates with AWS CDK or similar infrastructure-as-code tools.
-- **Functions:**
-  - Functions to deploy, synthesize, or manage cloud infrastructure.
-  - Type definitions in `cdk.d.ts`.
-
-### 6. project/index.ts
-
-- **Purpose:** Project-level operations and orchestration.
-- **Functions:**
-  - Functions to initialize, configure, or manage project settings.
-
-### 7. project/merge-env.ts
-
-- **Purpose:** TypeScript version of environment merging logic.
-- **Functions:**
-  - Similar to `merge-env.js`, but with type safety.
+```typescript
+function setData(key: string, value: unknown): void
+function getData(key?: string): unknown
+function mergeData(obj?: Record<string, unknown>): Record<string, unknown>
+function hasData(key: string): boolean
+function replaceTokens(str: unknown, env?: Record<string, string | undefined>): unknown
+```
 
 ---
 
-## Architecture
+## `packages/project/src/`
 
-- **Modular Design:** Each subdirectory (e.g., `cdk`, `project`) encapsulates
-  related functionality.
-- **TypeScript & JavaScript:** The codebase supports both, with `.d.ts` files
-  for type definitions.
-- **Environment Management:** Strong focus on merging and managing environment
-  variables for different deployment scenarios.
-- **Infrastructure Integration:** CDK integration suggests support for cloud
-  deployments.
+```
+packages/project/src/
+├── index.ts            — Barrel exports
+├── loadFromRoot.ts     — Root discovery, .mono config loading
+├── project/
+│   ├── index.ts        — loadAppConfig(), loadProjectConfig()
+│   ├── merge-env.ts    — loadMergedEnv()
+│   ├── filter-env.ts   — filterEnvByPrefixes(), filterEnvByConfig()
+│   ├── generate-docs.ts    — generateDocsIndex()
+│   ├── build-readme.ts     — Script entrypoint
+│   └── build-mono-readme.ts — Mono command markdown generation
+└── stack/
+    └── index.ts        — CustomStack CDK base class
+```
+
+### Key Exports
+
+**Root discovery** (`loadFromRoot.ts`):
+
+```typescript
+function findProjectRoot(startDir?: string): string
+function getRootDirectory(): string
+function getRootJson(): Record<string, unknown>
+function resolveMonoDirectory(): string | null
+function getMonoFiles(): string[]
+function getMonoConfig(): MonoConfig
+function clearMonoConfigCache(): void
+```
+
+**App configuration** (`project/index.ts`):
+
+```typescript
+function loadAppConfig<TCustom, TType extends string>(
+  configType?: TType,
+  startDir?: string
+): { config: ResolveConfig<TType, TCustom>; meta: WorkspaceDetectResult }
+
+const loadProjectConfig = loadAppConfig
+```
+
+Supports both local development (workspace discovery) and Lambda runtime (bundled
+config). Subpath export: `@mono-labs/project/project`.
+
+**Environment** (`project/merge-env.ts`, `project/filter-env.ts`):
+
+```typescript
+function loadMergedEnv(): NodeJS.ProcessEnv
+function filterEnvByPrefixes(env: Record<string, string | undefined>, prefixes: string[], include?: string[]): Record<string, string>
+function filterEnvByConfig(env?: Record<string, string | undefined>, include?: string[]): Record<string, string>
+```
+
+Default filter prefixes: `MONO_`, `EAS_`, `APP_`, `TAMAGUI_`.
+
+**CDK** (`stack/index.ts`):
+
+```typescript
+abstract class CustomStack extends cdk.Stack {
+  public ownerName: string
+  public region: string
+  public domainName?: string
+  protected enableNATGateway: boolean
+  constructor(scope: Construct, id: string, props?: CustomStackProps)
+  public initializeStackConfig(): void
+}
+```
+
+Subpath export: `@mono-labs/project/stack`.
+
+**Types**: `MonoConfig`, `MonoProjectConfig`, `MonoWorkspaceConfig`, `MonoFiles`,
+`CustomStackProps`, `ICustomStack`.
 
 ---
 
-## Configuration
+## `packages/expo/src/`
 
-- **Environment Files:** Use the merge-env utilities to combine `.env` files for
-  different environments.
-- **Project Settings:** Managed via the `project` module, likely through config
-  files or CLI prompts.
-- **CDK Configuration:** Infrastructure settings are defined in the `cdk`
-  module, possibly using `cdk.json` or similar files.
+```
+packages/expo/src/
+├── index.ts                — Barrel: replaceTokens, setUpConfig, filterUnwantedEnvVarsEAS
+├── expo.ts                 — Core functions
+├── tools.ts                — Re-exports replaceTokens, setUpConfig
+├── cdk/
+│   ├── index.ts            — Re-exports from cdk.ts
+│   └── cdk.ts              — Re-exports from tools.ts
+└── expo-files/
+    └── filterUnwantedEnvVars.ts — filterUnwantedEnvVars(), generateNewEnvList()
+```
 
----
+### Key Exports
 
-## Usage Examples
+**Main** (`expo.ts`):
 
-- **Merging Environments:**
-  - Use the CLI to merge environment files:
-    `node src/merge-env.js --env production`
-- **Deploying Infrastructure:**
-  - Run CDK commands via the CLI: `node src/cdk/index.js deploy`
-- **Project Initialization:**
-  - Initialize a new project: `node src/project/index.ts init`
+```typescript
+function replaceTokens(input: string, tokens: Record<string, string>): string
+function setUpConfig(config: AppJSONConfig): ExpoConfig
+function filterUnwantedEnvVarsEAS(envVars: Record<string, string>): Record<string, string>
+```
 
----
+**Env utilities** (`expo-files/filterUnwantedEnvVars.ts`):
 
-## Troubleshooting Recommendations
+```typescript
+function filterUnwantedEnvVars(env: Record<string, string>): Record<string, string>
+function filterUnwantedEnvVarsEAS(env: Record<string, string>): Record<string, string>
+function generateNewEnvList(processEnv: Record<string, string>): Record<string, string>
+```
 
-- **Environment Issues:**
-  - Ensure all required `.env` files are present and correctly formatted.
-  - Use the merge-env utilities to validate and merge environment variables.
-- **CDK Deployment Errors:**
-  - Check AWS credentials and region configuration.
-  - Validate CDK stack definitions in the `cdk` module.
-- **Type Errors:**
-  - Ensure type definitions (`.d.ts` files) are up to date and match
-    implementation files.
-- **General Debugging:**
-  - Use verbose logging options if available in the CLI.
-  - Review the `tools.js` utilities for debugging helpers.
+Subpath exports: `@mono-labs/expo/tools`, `@mono-labs/expo/cdk`.
 
 ---
 
-## Conclusion
+## `packages/dev/src/`
 
-This review provides a high-level summary of the `src` directory, its
-architecture, and key modules. For more detailed function-level documentation,
-refer to inline comments and type definitions within each file.
+```
+packages/dev/src/
+├── index.ts                — Barrel exports
+├── cache-relay.ts          — CacheRelay Redis abstraction
+├── local-server/
+│   ├── index.ts            — LocalServer class
+│   ├── types.ts            — Handler & config types
+│   └── event-synthesizer.ts — API Gateway V2 & ALB event synthesis
+├── websocket/
+│   ├── index.ts            — attachSocketAdapter()
+│   ├── types.ts            — WebSocket types
+│   ├── connection-registry.ts — ConnectionRegistry class
+│   ├── action-router.ts    — ActionRouter class
+│   ├── socket-gateway-client.ts — SocketGatewayClient (local + API Gateway modes)
+│   ├── socket-emitter.ts   — SocketEmitter class
+│   ├── channel-store.ts    — InMemoryChannelStore, RedisChannelStore
+│   └── event-synthesizer.ts — WebSocket event synthesis ($connect, $disconnect, message)
+└── aws-event-synthesis/
+    └── index.ts            — Shared utilities (flattenHeaders, createMockLambdaContext, etc.)
+```
+
+### Key Exports
+
+**LocalServer** (`local-server/index.ts`):
+
+```typescript
+class LocalServer {
+  readonly app: express.Express
+  constructor(config?: LocalServerConfig)
+  lambda(path: string, handler: ApiGatewayHandler): this
+  lambda(path: string, handler: ApiGatewayHandler, options: LambdaOptionsApiGateway): this
+  lambda(path: string, handler: ALBHandler, options: LambdaOptionsALB): this
+  attachSocket(adapterFn: typeof attachSocketAdapter, config?: SocketAdapterConfig): ReturnType<typeof attachSocketAdapter>
+  listen(port: number, hostname?: string): void
+}
+```
+
+**WebSocket** (`websocket/index.ts`):
+
+```typescript
+function attachSocketAdapter(wss: WebSocketServer, config?: SocketAdapterConfig): {
+  postToConnection: PostToConnectionFn
+  connectionRegistry: ConnectionRegistry
+  actionRouter: ActionRouter
+  channelStore: ChannelStore
+  socketEmitter: SocketEmitter
+  getConnectionId: (ws: WebSocket) => ConnectionId | undefined
+}
+```
+
+**SocketGatewayClient** -- dual-mode client accepting either a `ConnectionRegistry`
+(local WebSocket mode) or a URL string (AWS API Gateway mode).
+
+**CacheRelay** (`cache-relay.ts`):
+
+```typescript
+function initCacheRelay(connectionString?: string): CacheRelay
+function getCacheRelay(): CacheRelay
+```
+
+Namespaced Redis operations: `strings`, `hashes`, `lists`, `sets`, `sortedSets`,
+`keys`, `pubsub`, `transactions`, `scripts`, `geo`, `hyperloglog`, `bitmaps`,
+`streams`.
+
+See [`packages/dev/README.md`](../packages/dev/README.md) for the full API reference.

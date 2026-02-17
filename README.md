@@ -54,6 +54,7 @@ yarn mono dev
 | [`@mono-labs/cli`](packages/cli/README.md) | The CLI runtime -- reads `.mono/` definitions and executes commands |
 | [`@mono-labs/project`](packages/project/README.md) | Project config & env utilities -- root discovery, `.mono` config loading, env merging |
 | [`@mono-labs/expo`](packages/expo/README.md) | Expo/EAS build utilities -- env filtering, config setup, token replacement |
+| [`@mono-labs/dev`](packages/dev/README.md) | Local dev server & WebSocket adapter -- Lambda handler mapping, API Gateway WebSocket emulation, Redis caching |
 
 ## Documentation
 

@@ -19,27 +19,29 @@ mono-labs-cli/
     cli/           # @mono-labs/cli - The CLI runtime
     project/       # @mono-labs/project - Project config & env utilities
     expo/          # @mono-labs/expo - Expo/EAS build utilities
+    dev/           # @mono-labs/dev - Local dev server & WebSocket adapter
   scripts/
     bump-version.js  # Automated version bumping
   docs/            # Documentation
   .mono-exanples/  # Example command definitions
 ```
 
-This is a yarn workspaces monorepo. All three packages are published to npm under the `@mono-labs` scope.
+This is a yarn workspaces monorepo. All four packages are published to npm under the `@mono-labs` scope.
 
 ## Package Dependency Graph
 
 ```
 @mono-labs/project  (no internal deps)
-       |
-       v
-@mono-labs/expo     (depends on project)
-       |
-       v
-@mono-labs/cli      (depends on project + expo)
+       /       \
+      v         v
+@mono-labs/expo   @mono-labs/cli
+(depends on       (depends on
+ project)          project)
+
+@mono-labs/dev    (no internal deps — independent)
 ```
 
-Build order matters -- `project` must build before `expo`, and both before `cli`.
+Build order matters -- `project` must build before `expo` and `cli`. `dev` can build independently.
 
 ## Development Workflow
 
@@ -57,6 +59,7 @@ Build individual packages:
 yarn build:project
 yarn build:expo
 yarn build:cli
+yarn build:dev
 ```
 
 ### Making Changes
@@ -99,4 +102,4 @@ The deploy process is handled via a single command at the repo root:
 yarn deploy
 ```
 
-This runs the `scripts/bump-version.js` script to increment the patch version across all packages, commits the version bump, and publishes all three packages to npm. Only maintainers with npm publish access can deploy.
+This runs the `scripts/bump-version.js` script to increment the patch version across all packages, commits the version bump, and publishes all four packages to npm. Only maintainers with npm publish access can deploy.

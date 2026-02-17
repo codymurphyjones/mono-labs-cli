@@ -86,3 +86,18 @@ Infrastructure should be:
 - integrated into developer workflows
 
 If infra behaves differently in CI than locally, the system has failed.
+
+---
+
+## Local WebSocket Emulation
+
+`@mono-labs/dev` extends the infrastructure integration story to WebSockets.
+It provides local API Gateway WebSocket emulation, allowing the same
+`$connect`/`$disconnect`/message event flow used in production to be tested
+locally against a real WebSocket server.
+
+This means infrastructure integration patterns -- action routing, connection
+lifecycle, channel subscriptions -- can be developed and debugged without
+deploying to AWS.
+
+See [`packages/dev/README.md`](../packages/dev/README.md) for the full API.

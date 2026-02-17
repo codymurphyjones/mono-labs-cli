@@ -1,91 +1,54 @@
-# Mono Labs CLI: bin Directory Review & Documentation
+# CLI Binary Entry Point
 
 ## Overview
 
-This document reviews the `bin` directory in the Mono Labs CLI project, listing
-its files, summarizing their functions, and providing insights into
-architecture, configuration, usage, and troubleshooting.
+The Mono CLI binary lives at `packages/cli/bin/mono.js`. It is a two-line Node.js
+shebang script that bootstraps the CLI by requiring the compiled TypeScript output.
 
----
+## File
 
-## Directory Structure
+### `packages/cli/bin/mono.js`
 
-- **bin/**
-  - mono.js
+```js
+#!/usr/bin/env node
+require('../dist/lib/index.js')
+```
 
----
+- **Line 1** -- Standard Node.js shebang, allowing direct execution on Unix systems.
+- **Line 2** -- Requires the compiled entry point (`dist/lib/index.js`), which loads
+  Commander, registers all commands, and starts parsing `process.argv`.
 
-## File Review
+The binary performs no logic itself. All CLI behavior is defined in the `lib/`
+TypeScript source tree and compiled to `dist/lib/`.
 
-### mono.js
+## Registration
 
-- **Purpose:**
-  - The main executable entry point for the Mono Labs CLI.
-  - Typically invoked directly from the command line (e.g., `mono` or
-    `node bin/mono.js`).
-- **Functions:**
-  - Parses command-line arguments.
-  - Sets up the execution environment (e.g., loads environment variables, sets
-    working directory).
-  - Dispatches commands to the appropriate handlers in the `lib` or `src`
-    directories.
-  - Handles errors and displays help or usage information.
-- **Notes:**
-  - May include a shebang (`#!/usr/bin/env node`) for direct CLI execution.
-  - Acts as the bridge between the user and the CLI's internal logic.
+The binary is registered in `packages/cli/package.json` via the `bin` field:
 
----
+```json
+{
+  "bin": {
+    "mono": "./bin/mono.js"
+  }
+}
+```
 
-## Architecture
+When the package is installed (locally or globally), this makes the `mono` command
+available. In a yarn workspaces monorepo, it is typically invoked as:
 
-- **Entry Point:** The `bin/mono.js` file is the single entry point for the CLI,
-  delegating all logic to internal modules.
-- **Separation of Concerns:** Keeps CLI argument parsing and environment setup
-  separate from business logic, which resides in `lib` and `src`.
+```bash
+yarn mono <command> [argument] [--options]
+```
 
----
+## How It Connects to the Rest of the CLI
 
-## Configuration
+```
+bin/mono.js
+  -> require('../dist/lib/index.js')
+     -> lib/index.ts (source)
+        -> imports lib/app.ts (Commander program)
+        -> imports lib/commands/prune/ (prune command)
+        -> imports lib/commands/build-process/ (dynamic .mono commands)
+```
 
-- **Executable Permissions:** Ensure `mono.js` is executable
-  (`chmod +x bin/mono.js` on Unix systems).
-- **Path Setup:** The `bin` directory should be referenced in the `package.json`
-  `bin` field for npm global/local installs.
-- **Environment Variables:** Any required environment variables should be set
-  before invoking the CLI or handled within `mono.js`.
-
----
-
-## Usage Examples
-
-- **Run the CLI:**
-  - `./bin/mono.js <command> [options]`
-  - If installed globally: `mono <command> [options]`
-- **Display Help:**
-  - `./bin/mono.js --help`
-
----
-
-## Troubleshooting Recommendations
-
-- **Command Not Found:**
-  - Ensure `bin/mono.js` is executable and the `bin` field is set in
-    `package.json`.
-- **Permission Denied:**
-  - On Unix, run `chmod +x bin/mono.js`.
-- **Argument Parsing Errors:**
-  - Check for correct CLI usage with `--help`.
-- **Unhandled Errors:**
-  - Review error messages for stack traces; ensure all dependencies are
-    installed.
-- **Environment Issues:**
-  - Confirm required environment variables are set or handled in the script.
-
----
-
-## Conclusion
-
-The `bin/mono.js` file is the main entry point for the Mono Labs CLI,
-responsible for argument parsing, environment setup, and command dispatch. For
-more details, review the file's inline comments and referenced modules in `lib`
-and `src`.
+See [Architecture](architecture.md) for the full execution lifecycle.

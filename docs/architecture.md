@@ -21,6 +21,9 @@ debug it.
 
 ## Module Responsibilities
 
+> **Note:** Source files are TypeScript (`.ts`). The `.js` references below refer to
+> their compiled counterparts in `dist/`.
+
 | Module                      | Responsibility                                                                 |
 | --------------------------- | ------------------------------------------------------------------------------ | ---------- |
 | `boot.js`                   | Loads `.mono` config files and returns `{ rootDir, rootJson, files, config }`. |
@@ -124,6 +127,16 @@ Added automatically:
 - Declarative behavior via `.mono/*.json`.
 - Zero code changes required to add new commands.
 - Deterministic, log-rich execution with simple extension points.
+
+---
+
+## Related Packages
+
+The CLI is one of four packages in the mono-labs monorepo:
+
+- **[`@mono-labs/project`](../packages/project/README.md)** -- Project config & env utilities. Root discovery, `.mono` config loading, env merging, CDK base class. Sits at the base of the dependency graph.
+- **[`@mono-labs/expo`](../packages/expo/README.md)** -- Expo/EAS build utilities. Token replacement, Expo config setup, env filtering for EAS builds. Depends on `@mono-labs/project`.
+- **[`@mono-labs/dev`](../packages/dev/README.md)** -- Local dev server & WebSocket adapter. Maps Lambda handlers to Express routes, emulates API Gateway WebSocket connections, provides Redis caching. Independent (no internal deps).
 
 ---
 
