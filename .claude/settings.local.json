@@ -16,7 +16,8 @@
       "Bash(fi)",
       "Bash(done)",
       "Bash(find:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(ls:*)"
     ]
   }
 }

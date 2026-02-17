@@ -12,7 +12,8 @@ import {
 /** Synthesize an API Gateway V2 event from an Express request */
 export function synthesizeApiGatewayEvent(req: Request): APIGatewayProxyEventV2 {
 	const headers = flattenHeaders(req.headers)
-	const body = serializeBody(req.body)
+	const hasBody = req.method !== 'GET' && req.method !== 'HEAD'
+	const body = hasBody ? serializeBody(req.body) : null
 	const queryParams = extractQueryParams(req.query as Record<string, unknown>)
 	const { path, queryString } = splitUrl(req.originalUrl)
 	const requestId = generateRequestId()
@@ -51,7 +52,8 @@ export function synthesizeApiGatewayEvent(req: Request): APIGatewayProxyEventV2 
 /** Synthesize an ALB event from an Express request */
 export function synthesizeALBEvent(req: Request): ALBEvent {
 	const headers = flattenHeaders(req.headers)
-	const body = serializeBody(req.body)
+	const hasBody = req.method !== 'GET' && req.method !== 'HEAD'
+	const body = hasBody ? serializeBody(req.body) : null
 	const queryParams = extractQueryParams(req.query as Record<string, unknown>)
 	const { path } = splitUrl(req.originalUrl)
 
