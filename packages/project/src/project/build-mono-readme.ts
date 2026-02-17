@@ -4,6 +4,7 @@ import { promises as fs } from 'node:fs'
 import { Dirent } from 'node:fs'
 import path from 'node:path'
 import { generateDocsIndex } from './generate-docs'
+import { writeLog } from '@mono-labs/shared'
 
 const REPO_ROOT = path.resolve(process.cwd())
 const MONO_DIR = path.join(REPO_ROOT, '.mono')
@@ -136,9 +137,9 @@ async function findWorkspacePackageDirs(
 // ---------- .mono parsing ----------
 async function readMonoConfig(): Promise<MonoConfig | null> {
   const configPath = path.join(MONO_DIR, 'config.json')
-  console.log(`[readMonoConfig] Looking for mono config at:`, configPath)
+  writeLog(`[readMonoConfig] Looking for mono config at:`, configPath)
   if (!(await exists(configPath))) {
-    console.log(`[readMonoConfig] No mono config found.`)
+    writeLog(`[readMonoConfig] No mono config found.`)
     return null
   }
   try {
@@ -528,10 +529,10 @@ async function main(): Promise<void> {
   await ensureParentDir(OUTPUT_README)
   await fs.writeFile(OUTPUT_README, parts.join('\n'), 'utf8')
 
-  console.log(`[main] Generated: ${OUTPUT_README}`)
-  console.log(`[main] mono config: ${monoConfig ? 'yes' : 'no'}`)
-  console.log(`[main] mono commands: ${monoCommands.length}`)
-  console.log(`[main] workspace packages: ${packages.length}`)
+  writeLog(`[main] Generated: ${OUTPUT_README}`)
+  writeLog(`[main] mono config: ${monoConfig ? 'yes' : 'no'}`)
+  writeLog(`[main] mono commands: ${monoCommands.length}`)
+  writeLog(`[main] workspace packages: ${packages.length}`)
 }
 
 main().catch((err) => {

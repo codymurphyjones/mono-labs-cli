@@ -14,6 +14,7 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { generateDocsIndex } from './generate-docs'
+import { writeLog } from '@mono-labs/shared'
 
 interface PackageInfo {
   name: string
@@ -341,8 +342,8 @@ async function main(): Promise<void> {
   await ensureParentDir(OUTPUT_PATH)
   await fs.writeFile(OUTPUT_PATH, lines.join('\n'), 'utf8')
 
-  console.log(`✅ Generated ${OUTPUT_PATH}`)
-  console.log(`📦 Packages found: ${packages.length}`)
+  writeLog(`Generated ${OUTPUT_PATH}`)
+  writeLog(`Packages found: ${packages.length}`)
 }
 
 main().catch((err) => {

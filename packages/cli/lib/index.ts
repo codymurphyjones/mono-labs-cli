@@ -1,4 +1,5 @@
 import { loadMergedEnv } from '@mono-labs/project'
+import { writeLog } from '@mono-labs/shared'
 
 import { spawn } from 'node:child_process'
 import os from 'node:os'
@@ -51,7 +52,7 @@ program.on('command:*', (operands: string[]) => {
   })
 
   child.on('exit', (code) => {
-    console.log('Child process exited with code:', code)
+    writeLog('Child process exited with code:', code)
     process.exitCode = code ?? 1
   })
 })

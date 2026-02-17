@@ -5,7 +5,7 @@ import { getMonoConfig } from '../loadFromRoot'
 import { parseEnvFile } from './readEnv'
 import path from 'node:path'
 import { mergeData } from './dataLayer'
-import { testFlag } from './testflag'
+import { writeLog } from '@mono-labs/shared'
 
 export function getAllowAllKeys(cfg: any): string[] {
   const decls = cfg.options ?? {}
@@ -29,7 +29,7 @@ export function getAllowAllKeys(cfg: any): string[] {
 export async function runMonoCommand(configObject: any, options: any = {}): Promise<void> {
   const { config } = getMonoConfig() as { config: any }
   const devConfig = configObject.environments?.dev ?? {}
-  console.log('configObject:', JSON.stringify(configObject, null, 2))
+  writeLog('configObject:', JSON.stringify(configObject, null, 2))
   mergeData({ ...options })
 
   // Usage:

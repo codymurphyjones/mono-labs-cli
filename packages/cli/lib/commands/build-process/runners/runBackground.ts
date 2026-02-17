@@ -1,6 +1,7 @@
 import { spawn } from 'child_process'
 import { replaceTokens } from '../dataLayer'
 import { registerBackground } from './processManager'
+import { writeLog } from '@mono-labs/shared'
 
 function createdExpandedEnv(envObj: Record<string, unknown>): Record<string, unknown> {
   const expandedEnv: Record<string, unknown> = {}
@@ -22,7 +23,7 @@ export function runBackground(
   // Replace ${field} tokens in env values using dataLayer
   const expandedEnv = createdExpandedEnv(envObj)
 
-  console.log(`→ ${logName} action ${attached ? '(attached)' : ''}: ${cmd}`)
+  writeLog(`→ ${logName} action ${attached ? '(attached)' : ''}: ${cmd}`)
 
   // Replace in command string
   const outCmd = replaceTokens(cmd) as string

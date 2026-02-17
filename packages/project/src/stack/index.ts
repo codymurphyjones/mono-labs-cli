@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib'
 import { Construct } from 'constructs'
 import { loadMergedEnv } from '../project/index'
+import { writeLog } from '@mono-labs/shared'
 
 loadMergedEnv()
 //cdk deploy --context owner=cody --context region=us-west-1
@@ -63,7 +64,7 @@ export abstract class CustomStack extends cdk.Stack {
       this.enableNATGateway = ctxNat !== 'false'
     }
 
-    console.log('[Stack Config]', {
+    writeLog('[Stack Config]', {
       owner: this.ownerName,
       region: this.region,
       account: this.account,

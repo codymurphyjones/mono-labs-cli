@@ -1,0 +1,10 @@
+{
+  "name": "@mono-labs/shared",
+  "version": "0.1.257",
+  "main": "dist/writeLog.js",
+  "types": "dist/writeLog.d.ts",
+  "files": ["dist/"],
+  "scripts": {
+    "build": "tsc"
+  }
+}

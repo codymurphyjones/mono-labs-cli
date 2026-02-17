@@ -45,6 +45,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@mono-labs/shared": "0.1.257",
     "@mono-labs/project": "0.1.257",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
