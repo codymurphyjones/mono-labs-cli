@@ -37,7 +37,7 @@ export async function runMonoCommand(configObject: any, options: any = {}): Prom
   const keymap = parseEnvFile(envPath)
 
   const prodConfig = configObject.environments?.prod ?? {}
-  const awsProfile = process.env.CDK_DEPLOY_PROFILE || 'default'
+  const awsProfile = process.env.CDK_DEPLOY_PROFILE || process.env.AWS_PROFILE || 'default'
   const envObjBase: Record<string, any> = options.prod ? { ...prodConfig } : { ...devConfig }
 
   Object.keys(envObjBase).forEach((k) => {
