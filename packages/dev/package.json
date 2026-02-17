@@ -1,0 +1,38 @@
+{
+  "name": "@mono-labs/dev",
+  "version": "0.1.251",
+  "type": "commonjs",
+  "description": "Local development server and WebSocket adapter for mono-labs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "tsc && npm publish --access public --registry https://registry.npmjs.org/",
+    "release:patch": "npm version patch -m \"chore: release %s\" && npm publish --access public",
+    "release:minor": "npm version minor -m \"chore: release %s\" && npm publish --access public",
+    "release:major": "npm version major -m \"chore: release %s\" && npm publish --access public"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^25.1.0",
+    "@types/ws": "^8.5.13",
+    "aws-lambda": "^1.0.7",
+    "@types/aws-lambda": "^8.10.145",
+    "typescript": "^5.9.3"
+  }
+}

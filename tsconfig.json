@@ -3,6 +3,7 @@
   "references": [
     { "path": "packages/project" },
     { "path": "packages/expo" },
-    { "path": "packages/cli" }
+    { "path": "packages/cli" },
+    { "path": "packages/dev" }
   ]
 }
