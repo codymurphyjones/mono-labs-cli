@@ -6,7 +6,7 @@ export type { ApiGatewayHandler, ALBHandler, LocalServerConfig } from './local-s
 export { attachSocketAdapter } from './websocket'
 export { ConnectionRegistry } from './websocket/connection-registry'
 export { ActionRouter } from './websocket/action-router'
-export { LocalGatewayClient } from './websocket/local-gateway-client'
+export { SocketGatewayClient } from './websocket/socket-gateway-client'
 export { InMemoryChannelStore, RedisChannelStore } from './websocket/channel-store'
 export { SocketEmitter } from './websocket/socket-emitter'
 export type {

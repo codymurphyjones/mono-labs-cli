@@ -3,7 +3,7 @@ import type { WebSocket, WebSocketServer } from 'ws'
 import { ActionRouter } from './action-router'
 import { ConnectionRegistry } from './connection-registry'
 import { buildRequestContext } from './event-synthesizer'
-import { LocalGatewayClient } from './local-gateway-client'
+import { SocketGatewayClient } from './socket-gateway-client'
 import { InMemoryChannelStore, RedisChannelStore } from './channel-store'
 import { SocketEmitter } from './socket-emitter'
 import { initCacheRelay } from '../cache-relay'
@@ -11,7 +11,7 @@ import type { ConnectionId, SocketAdapterConfig } from './types'
 
 export type { ConnectionId, PostToConnectionFn, SocketAdapterConfig, RedisConfig } from './types'
 export { ConnectionRegistry } from './connection-registry'
-export { LocalGatewayClient } from './local-gateway-client'
+export { SocketGatewayClient } from './socket-gateway-client'
 export { ActionRouter } from './action-router'
 export { InMemoryChannelStore, RedisChannelStore } from './channel-store'
 export type { ChannelStore } from './channel-store'
@@ -29,7 +29,7 @@ export function attachSocketAdapter(wss: WebSocketServer, config?: SocketAdapter
 	const stage = config?.stage ?? 'local'
 
 	const connectionRegistry = new ConnectionRegistry()
-	const gatewayClient = new LocalGatewayClient(connectionRegistry)
+	const gatewayClient = new SocketGatewayClient(connectionRegistry)
 	const postToConnection = gatewayClient.asFunction()
 	const actionRouter = new ActionRouter()
 

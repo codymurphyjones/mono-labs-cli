@@ -8,11 +8,13 @@ const packagePaths = [
   path.join(root, "packages", "project", "package.json"),
   path.join(root, "packages", "expo", "package.json"),
   path.join(root, "packages", "cli", "package.json"),
+  path.join(root, "packages", "dev", "package.json"),
 ];
 
 const interPackageDeps = {
   "@mono-labs/project": true,
   "@mono-labs/expo": true,
+  "@mono-labs/dev": true,
 };
 
 // Read current version from root package.json

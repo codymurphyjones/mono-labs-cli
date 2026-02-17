@@ -27,10 +27,14 @@
     "ws": "^8.18.0"
   },
   "peerDependencies": {
-    "ioredis": ">=5.0.0"
+    "ioredis": ">=5.0.0",
+    "@aws-sdk/client-apigatewaymanagementapi": ">=3.0.0"
   },
   "peerDependenciesMeta": {
     "ioredis": {
+      "optional": true
+    },
+    "@aws-sdk/client-apigatewaymanagementapi": {
       "optional": true
     }
   },

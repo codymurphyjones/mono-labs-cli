@@ -452,7 +452,10 @@ function buildCacheRelay(redis: RedisClient): CacheRelay {
  * Requires `ioredis` as a peer dependency — throws a clear error if missing.
  */
 export function initCacheRelay(connectionString?: string): CacheRelay {
-	const connStr = connectionString ?? 'localhost:6379'
+	const raw = connectionString ?? 'localhost:6379'
+
+	// Normalize: bare hostname (no port) → hostname:6379
+	const connStr = raw.includes(':') ? raw : `${raw}:6379`
 
 	// Reuse existing instance when the connection string hasn't changed
 	if (_cacheRelay && _currentConnectionString === connStr) return _cacheRelay
