@@ -54,6 +54,13 @@ export type ConnectHandlerFn = (
 /** Handler called on $disconnect */
 export type DisconnectHandlerFn = (connectionId: ConnectionId) => Promise<void>
 
+/** Redis connection configuration */
+export interface RedisConfig {
+	host?: string
+	port?: number
+	keyPrefix?: string
+}
+
 /** Configuration for the socket adapter */
 export interface SocketAdapterConfig {
 	domainName?: string
@@ -63,4 +70,7 @@ export interface SocketAdapterConfig {
 	disconnectHandler?: DisconnectHandlerFn
 	routes?: Record<string, ActionHandler>
 	defaultHandler?: ActionHandler
+	channelStore?: import('./channel-store').ChannelStore
+	useRedis?: boolean
+	redis?: RedisConfig
 }

@@ -4,12 +4,19 @@ import { ActionRouter } from './action-router'
 import { ConnectionRegistry } from './connection-registry'
 import { buildRequestContext } from './event-synthesizer'
 import { LocalGatewayClient } from './local-gateway-client'
+import { InMemoryChannelStore, RedisChannelStore } from './channel-store'
+import { SocketEmitter } from './socket-emitter'
+import { initCacheRelay } from '../cache-relay'
 import type { ConnectionId, SocketAdapterConfig } from './types'
 
-export type { ConnectionId, PostToConnectionFn, SocketAdapterConfig } from './types'
+export type { ConnectionId, PostToConnectionFn, SocketAdapterConfig, RedisConfig } from './types'
 export { ConnectionRegistry } from './connection-registry'
 export { LocalGatewayClient } from './local-gateway-client'
 export { ActionRouter } from './action-router'
+export { InMemoryChannelStore, RedisChannelStore } from './channel-store'
+export type { ChannelStore } from './channel-store'
+export { SocketEmitter } from './socket-emitter'
+export type { EmitTarget } from './socket-emitter'
 
 /**
  * Attaches a full socket adapter to a WebSocketServer instance.
@@ -25,6 +32,22 @@ export function attachSocketAdapter(wss: WebSocketServer, config?: SocketAdapter
 	const gatewayClient = new LocalGatewayClient(connectionRegistry)
 	const postToConnection = gatewayClient.asFunction()
 	const actionRouter = new ActionRouter()
+
+	// Create channel store
+	let channelStore = config?.channelStore
+	if (!channelStore) {
+		if (config?.useRedis) {
+			const host = config.redis?.host ?? 'localhost'
+			const port = config.redis?.port ?? 6379
+			initCacheRelay(`${host}:${port}`)
+			channelStore = new RedisChannelStore({ keyPrefix: config.redis?.keyPrefix })
+		} else {
+			channelStore = new InMemoryChannelStore()
+		}
+	}
+
+	// Create socket emitter
+	const socketEmitter = new SocketEmitter({ postToConnection, connectionRegistry, channelStore })
 
 	// Register consumer-provided routes
 	if (config?.routes) {
@@ -131,6 +154,7 @@ export function attachSocketAdapter(wss: WebSocketServer, config?: SocketAdapter
 				)
 			}
 
+			await channelStore.removeAll(connectionId)
 			await disconnectHandler(connectionId)
 			connectionRegistry.unregister(connectionId)
 			wsToConnectionId.delete(ws)
@@ -141,6 +165,8 @@ export function attachSocketAdapter(wss: WebSocketServer, config?: SocketAdapter
 		postToConnection,
 		connectionRegistry,
 		actionRouter,
+		channelStore,
+		socketEmitter,
 		getConnectionId: (ws: WebSocket) => wsToConnectionId.get(ws),
 	}
 }

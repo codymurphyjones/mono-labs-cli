@@ -79,7 +79,13 @@ export class LocalServer {
 		config?: SocketAdapterConfig,
 	): ReturnType<typeof attachSocketAdapter> {
 		const wss = new WebSocketServer({ server: this.httpServer })
-		return adapterFn(wss, config)
+		const mergedConfig: SocketAdapterConfig = {
+			...config,
+			useRedis: config?.useRedis ?? this.config.useRedis,
+			redis: config?.redis ?? this.config.redis,
+			debug: config?.debug ?? this.config.debug,
+		}
+		return adapterFn(wss, mergedConfig)
 	}
 
 	listen(port: number, hostname?: string): void {
