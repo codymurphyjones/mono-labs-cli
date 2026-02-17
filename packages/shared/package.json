@@ -1,6 +1,6 @@
 {
   "name": "@mono-labs/shared",
-  "version": "0.1.259",
+  "version": "0.1.260",
   "type": "commonjs",
   "description": "Shared utilities for mono-labs",
   "main": "dist/writeLog.js",
