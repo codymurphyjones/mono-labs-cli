@@ -12,13 +12,14 @@ export function setData(key: string, value: unknown): void {
 
 export function mergeData(obj: Record<string, unknown> = {}): Record<string, unknown> {
   writeLog(`→ dataLayer mergeData: ${JSON.stringify(obj)}`)
-  Object.entries(obj).forEach(([k, v]) => setData(k, v))
+  Object.entries(obj).forEach(([k, v]) => {
+    if (v !== undefined) dataLayer[k] = v
+  })
 
   return dataLayer
 }
 
 export function getData(key?: string): unknown {
-  writeLog(`→ dataLayer get: ${String(key)}`)
   return key ? dataLayer[key] : dataLayer
 }
 
@@ -28,9 +29,6 @@ export function hasData(key: string): boolean {
 
 export function replaceTokens(str: unknown, env?: Record<string, unknown>): unknown {
   if (typeof str !== 'string') return str
-
-  writeLog('→ replaceTokens called')
-  writeLog('dataLayer:', dataLayer)
 
   return str.replace(/\$\{([^}]+)\}|\$([A-Z0-9_]+)/g, (_m, k1, k2) => {
     const k = (k1 || k2) as string

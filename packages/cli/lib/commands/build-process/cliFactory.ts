@@ -5,7 +5,6 @@ import { verifyOptionValue } from './validators'
 import { mergeData } from './dataLayer'
 import { getMonoConfig } from '../loadFromRoot'
 import { pruneRepo } from '../prune/prune'
-import { writeLog } from '@mono-labs/shared'
 
 type MonoFileDefinition = {
   name?: string
@@ -199,8 +198,6 @@ export function buildCommands(files: Record<string, MonoFileDefinition>): void {
 
           const args = { ...defaultLookups, arg: argVal }
 
-          writeLog('defaults', optionVals)
-          writeLog('object', { ...optionVals, ...args })
           mergeData({ ...optionVals, ...args } as any)
           await runMonoCommand(configObject as any, optionVals)
         } catch (err: any) {
