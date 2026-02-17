@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, "..");
 
 const packagePaths = [
   path.join(root, "package.json"),
+  path.join(root, "packages", "shared", "package.json"),
   path.join(root, "packages", "project", "package.json"),
   path.join(root, "packages", "expo", "package.json"),
   path.join(root, "packages", "cli", "package.json"),
@@ -12,6 +13,7 @@ const packagePaths = [
 ];
 
 const interPackageDeps = {
+  "@mono-labs/shared": true,
   "@mono-labs/project": true,
   "@mono-labs/expo": true,
   "@mono-labs/dev": true,

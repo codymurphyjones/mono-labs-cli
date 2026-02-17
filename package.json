@@ -1,13 +1,14 @@
 {
   "private": true,
   "name": "mono-labs",
-  "version": "0.1.257",
+  "version": "0.1.258",
   "workspaces": [
     "packages/*"
   ],
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
   "scripts": {
     "build": "tsc -b",
+    "build:shared": "yarn workspace @mono-labs/shared build",
     "build:project": "yarn workspace @mono-labs/project build",
     "build:expo": "yarn workspace @mono-labs/expo build",
     "build:cli": "yarn workspace @mono-labs/cli build",
@@ -15,7 +16,7 @@
     "version:bump": "node scripts/bump-version.js",
     "version:up": "node scripts/bump-version.js minor",
     "version:major": "node scripts/bump-version.js major",
-    "deploy": "node scripts/bump-version.js && git add package.json packages/*/package.json && git commit -m \"$(node -e \"process.stdout.write(require('./package.json').version)\")\" && yarn workspace @mono-labs/project deploy && yarn workspace @mono-labs/expo deploy && yarn workspace @mono-labs/cli deploy && yarn workspace @mono-labs/dev deploy"
+    "deploy": "node scripts/bump-version.js && git add package.json packages/*/package.json && git commit -m \"$(node -e \"process.stdout.write(require('./package.json').version)\")\" && yarn workspace @mono-labs/shared deploy && yarn workspace @mono-labs/project deploy && yarn workspace @mono-labs/expo deploy && yarn workspace @mono-labs/cli deploy && yarn workspace @mono-labs/dev deploy"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
