@@ -31,6 +31,7 @@ type DefaultDeployConfig = {
   warehouseRegion: string
   dbInstanceType: string
   appInstanceType: string
+  redisEnvVariable?: string
 }
 
 const requiredSystemDefaults = {

@@ -3,7 +3,7 @@ import type { WebSocket } from 'ws'
 /** User context attached to a WebSocket connection */
 export interface WebSocketUserContext {
 	userId: string
-	organizationId: string
+	organizationId: string | null
 	[key: string]: unknown
 }
 
@@ -54,10 +54,8 @@ export type ConnectHandlerFn = (
 /** Handler called on $disconnect */
 export type DisconnectHandlerFn = (connectionId: ConnectionId) => Promise<void>
 
-/** Redis connection configuration */
+/** Redis configuration */
 export interface RedisConfig {
-	host?: string
-	port?: number
 	keyPrefix?: string
 }
 

@@ -15,7 +15,7 @@ export function synthesizeApiGatewayEvent(req: Request): APIGatewayProxyEventV2 
 	const hasBody = req.method !== 'GET' && req.method !== 'HEAD'
 	const body = hasBody ? serializeBody(req.body) : null
 	const queryParams = extractQueryParams(req.query as Record<string, unknown>)
-	const { path, queryString } = splitUrl(req.originalUrl)
+	const { path, queryString } = splitUrl(req.url)
 	const requestId = generateRequestId()
 	const now = Date.now()
 
@@ -55,7 +55,7 @@ export function synthesizeALBEvent(req: Request): ALBEvent {
 	const hasBody = req.method !== 'GET' && req.method !== 'HEAD'
 	const body = hasBody ? serializeBody(req.body) : null
 	const queryParams = extractQueryParams(req.query as Record<string, unknown>)
-	const { path } = splitUrl(req.originalUrl)
+	const { path } = splitUrl(req.url)
 
 	return {
 		requestContext: {

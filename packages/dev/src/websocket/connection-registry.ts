@@ -60,7 +60,7 @@ export class ConnectionRegistry {
 	getConnectionsByOrgId(orgId: string): ConnectionId[] {
 		const result: ConnectionId[] = []
 		for (const [connId, ctx] of this.userContexts) {
-			if (ctx.organizationId === orgId) result.push(connId)
+			if (ctx.organizationId !== null && ctx.organizationId === orgId) result.push(connId)
 		}
 		return result
 	}

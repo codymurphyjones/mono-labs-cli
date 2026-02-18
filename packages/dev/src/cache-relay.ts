@@ -445,17 +445,20 @@ function buildCacheRelay(redis: RedisClient): CacheRelay {
 /**
  * Initialize (or reinitialize) the CacheRelay singleton.
  *
- * @param connectionString — `host:port` (default `localhost:6379`)
+ * @param envVarName - Name of the environment variable holding the Redis
+ *   `host:port` connection string. Defaults to `CUSTOM_REDIS_URL`.
+ *   When the env var is unset the relay falls back to `localhost:6379`.
  * @returns the CacheRelay instance
  *
  * Only creates a new Redis connection when the connection string changes.
  * Requires `ioredis` as a peer dependency — throws a clear error if missing.
  */
-export function initCacheRelay(connectionString?: string): CacheRelay {
-	const raw = connectionString ?? 'localhost:6379'
+export function initCacheRelay(envVarName?: string): CacheRelay {
+	const envKey = envVarName || 'CUSTOM_REDIS_URL'
+	const rawUrl = process.env[envKey] ?? 'localhost'
 
 	// Normalize: bare hostname (no port) → hostname:6379
-	const connStr = raw.includes(':') ? raw : `${raw}:6379`
+	const connStr = rawUrl.includes(':') ? rawUrl : `${rawUrl}:6379`
 
 	// Reuse existing instance when the connection string hasn't changed
 	if (_cacheRelay && _currentConnectionString === connStr) return _cacheRelay
@@ -483,8 +486,10 @@ export function initCacheRelay(connectionString?: string): CacheRelay {
 /**
  * Get the current CacheRelay singleton.
  * Lazily initializes with default settings (`localhost:6379`) if not yet created.
+ *
+ * @param envVarName - Forwarded to {@link initCacheRelay} on first call.
  */
-export function getCacheRelay(): CacheRelay {
-	if (!_cacheRelay) return initCacheRelay()
+export function getCacheRelay(envVarName?: string): CacheRelay {
+	if (!_cacheRelay) return initCacheRelay(envVarName)
 	return _cacheRelay
 }

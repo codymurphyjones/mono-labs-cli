@@ -30,7 +30,7 @@ import { LocalServer } from '@mono-labs/dev'
 const server = new LocalServer({ debug: true })
 ```
 
-- **`constructor(config?)`** -- Creates a new server. `LocalServerConfig` options: `debug?: boolean`, `useRedis?: boolean`, `redis?: RedisConfig`.
+- **`constructor(config?)`** -- Creates a new server. `LocalServerConfig` options: `debug?: boolean`, `useRedis?: boolean`.
 - **`.app`** -- The underlying `express.Express` instance for custom middleware.
 
 #### `.lambda(path, handler, options?)`
@@ -108,7 +108,7 @@ const {
 - `defaultHandler?: ActionHandler` -- Fallback for unmatched actions
 - `channelStore?: ChannelStore` -- Custom channel store implementation
 - `useRedis?: boolean` -- Use Redis-backed channel store
-- `redis?: RedisConfig` -- Redis connection options
+- `redis?: RedisConfig` -- Redis options (`keyPrefix`)
 
 #### `ConnectionRegistry`
 
@@ -196,16 +196,19 @@ interface ChannelStore {
 Redis abstraction with namespaced operations. Requires `ioredis` peer dependency.
 
 ```typescript
-import { initCacheRelay, getCacheRelay } from '@mono-labs/dev'
+import { getCacheRelay } from '@mono-labs/dev'
 
-// Initialize (defaults to localhost:6379)
-initCacheRelay()
-
-// Or with a connection string (bare hostnames auto-normalized to redis://)
-initCacheRelay('my-redis-host:6379')
-
-// Get the singleton instance
+// Auto-connects using process.env.CUSTOM_REDIS_URL (defaults to localhost:6379)
 const cache = getCacheRelay()
+
+// Or specify a custom env var name:
+const cache2 = getCacheRelay('MY_REDIS')
+```
+
+Set `CUSTOM_REDIS_URL` to override the default connection target:
+
+```bash
+CUSTOM_REDIS_URL=my-redis-host:6380 node app.js
 ```
 
 **Top-level convenience methods:**

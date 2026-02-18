@@ -86,31 +86,31 @@ export class RedisChannelStore implements ChannelStore {
 
 	async subscribe(connectionId: ConnectionId, channel: string): Promise<void> {
 		const relay = this.getRelay()
-		await relay.raw.sadd(`${this.channelKeyPrefix}${channel}`, connectionId)
-		await relay.raw.sadd(`${this.connChannelsPrefix}${connectionId}`, channel)
+		await relay.sets.add(`${this.channelKeyPrefix}${channel}`, connectionId)
+		await relay.sets.add(`${this.connChannelsPrefix}${connectionId}`, channel)
 	}
 
 	async unsubscribe(connectionId: ConnectionId, channel: string): Promise<void> {
 		const relay = this.getRelay()
-		await relay.raw.srem(`${this.channelKeyPrefix}${channel}`, connectionId)
-		await relay.raw.srem(`${this.connChannelsPrefix}${connectionId}`, channel)
+		await relay.sets.rem(`${this.channelKeyPrefix}${channel}`, connectionId)
+		await relay.sets.rem(`${this.connChannelsPrefix}${connectionId}`, channel)
 	}
 
 	async getSubscribers(channel: string): Promise<ConnectionId[]> {
 		const relay = this.getRelay()
-		return relay.raw.smembers(`${this.channelKeyPrefix}${channel}`)
+		return relay.sets.members(`${this.channelKeyPrefix}${channel}`)
 	}
 
 	async removeAll(connectionId: ConnectionId): Promise<void> {
 		const relay = this.getRelay()
-		const channels: string[] = await relay.raw.smembers(`${this.connChannelsPrefix}${connectionId}`)
+		const channels: string[] = await relay.sets.members(`${this.connChannelsPrefix}${connectionId}`)
 
 		await Promise.allSettled(
 			channels.map((channel) =>
-				relay.raw.srem(`${this.channelKeyPrefix}${channel}`, connectionId)
+				relay.sets.rem(`${this.channelKeyPrefix}${channel}`, connectionId)
 			)
 		)
 
-		await relay.raw.del(`${this.connChannelsPrefix}${connectionId}`)
+		await relay.del(`${this.connChannelsPrefix}${connectionId}`)
 	}
 }

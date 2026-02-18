@@ -199,6 +199,7 @@ export function buildCommands(files: Record<string, MonoFileDefinition>): void {
           const args = { ...defaultLookups, arg: argVal }
 
           mergeData({ ...optionVals, ...args } as any)
+          configObject.name = configObject.name || commandName
           await runMonoCommand(configObject as any, optionVals)
         } catch (err: any) {
           console.error('Error executing mono command:', err?.message)

@@ -6,7 +6,6 @@ import { buildRequestContext } from './event-synthesizer'
 import { SocketGatewayClient } from './socket-gateway-client'
 import { InMemoryChannelStore, RedisChannelStore } from './channel-store'
 import { SocketEmitter } from './socket-emitter'
-import { initCacheRelay } from '../cache-relay'
 import type { ConnectionId, SocketAdapterConfig } from './types'
 
 export type { ConnectionId, PostToConnectionFn, SocketAdapterConfig, RedisConfig } from './types'
@@ -37,9 +36,6 @@ export function attachSocketAdapter(wss: WebSocketServer, config?: SocketAdapter
 	let channelStore = config?.channelStore
 	if (!channelStore) {
 		if (config?.useRedis) {
-			const host = config.redis?.host ?? 'localhost'
-			const port = config.redis?.port ?? 6379
-			initCacheRelay(`${host}:${port}`)
 			channelStore = new RedisChannelStore({ keyPrefix: config.redis?.keyPrefix })
 		} else {
 			channelStore = new InMemoryChannelStore()
@@ -135,7 +131,7 @@ export function attachSocketAdapter(wss: WebSocketServer, config?: SocketAdapter
 
 			const resolvedUserContext = userContext ?? connectionRegistry.getUserContext(connectionId) ?? {
 				userId: 'anonymous',
-				organizationId: 'anonymous',
+				organizationId: null,
 			}
 
 			const result = await actionRouter.route(connectionId, rawBody, postToConnection, requestContext, resolvedUserContext)

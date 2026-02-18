@@ -33,5 +33,4 @@ export interface LambdaOptionsALB {
 export interface LocalServerConfig {
 	debug?: boolean
 	useRedis?: boolean
-	redis?: import('../websocket/types').RedisConfig
 }
