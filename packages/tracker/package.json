@@ -1,0 +1,32 @@
+{
+  "name": "@mono-labs/tracker",
+  "version": "0.1.267",
+  "type": "commonjs",
+  "description": "Code notation tracker for scanning, parsing, and managing structured comment markers",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "deploy": "tsc && npm publish --access public --registry https://registry.npmjs.org/",
+    "release:patch": "npm version patch -m \"chore: release %s\" && npm publish --access public",
+    "release:minor": "npm version minor -m \"chore: release %s\" && npm publish --access public",
+    "release:major": "npm version major -m \"chore: release %s\" && npm publish --access public"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "fast-glob": "^3.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.1.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.0.0"
+  }
+}

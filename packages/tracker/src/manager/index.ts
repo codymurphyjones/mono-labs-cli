@@ -1,0 +1,6 @@
+export { NotationManager } from './notation-manager'
+export { getBlockers, isBlocked, detectCircularDependencies } from './relationship-manager'
+export { updateStatus, addTag, removeTag, setAssignee } from './notation-updater'
+export { validateNotation, validateAll } from './validator'
+export type { ValidationError } from './validator'
+export { computeStats } from './stats'

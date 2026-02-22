@@ -5,6 +5,7 @@
     { "path": "packages/project" },
     { "path": "packages/expo" },
     { "path": "packages/cli" },
-    { "path": "packages/dev" }
+    { "path": "packages/dev" },
+    { "path": "packages/tracker" }
   ]
 }
