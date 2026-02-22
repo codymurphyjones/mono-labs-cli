@@ -1,6 +1,6 @@
 {
   "name": "@mono-labs/dev",
-  "version": "0.1.271",
+  "version": "0.1.272",
   "type": "commonjs",
   "description": "Local development server and WebSocket adapter for mono-labs",
   "main": "dist/index.js",
