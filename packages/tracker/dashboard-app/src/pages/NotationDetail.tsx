@@ -1,21 +1,26 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useNotations } from '../hooks/useNotations'
-
-const typeColors: Record<string, string> = {
-  TODO: '#3b82f6',
-  FIXME: '#f59e0b',
-  BUG: '#ef4444',
-  HACK: '#8b5cf6',
-  NOTE: '#6b7280',
-  OPTIMIZE: '#10b981',
-  SECURITY: '#dc2626',
-}
+import { fetchSource, saveSource, saveActions } from '../hooks/useQuery'
+import { typeColors } from '../constants'
+import { CodeBlock } from '../components/CodeBlock'
+import { ActionDisplay } from '../components/ActionDisplay'
+import { ActionForm } from '../components/ActionForm'
+import type { NotationAction } from '../hooks/useNotations'
 
 export function NotationDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { notations } = useNotations()
   const notation = notations.find((n) => n.id === id)
+
+  const [editing, setEditing] = useState(false)
+  const [sourceContent, setSourceContent] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const [addingAction, setAddingAction] = useState(false)
+  const [editingActionIndex, setEditingActionIndex] = useState<number | null>(null)
 
   if (!notation) {
     return (
@@ -27,6 +32,68 @@ export function NotationDetail() {
       </div>
     )
   }
+
+  const handleEdit = async () => {
+    try {
+      setError(null)
+      const data = await fetchSource(notation.id)
+      setSourceContent(data.source)
+      setEditing(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch source')
+    }
+  }
+
+  const handleSave = async () => {
+    try {
+      setSaving(true)
+      setError(null)
+      await saveSource(notation.id, sourceContent)
+      setEditing(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save source')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditing(false)
+    setError(null)
+  }
+
+  const actions = (notation.actions ?? []) as NotationAction[]
+
+  const handleDeleteAction = async (index: number) => {
+    const updated = actions.filter((_, i) => i !== index)
+    try {
+      setError(null)
+      await saveActions(notation.id, updated)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete action')
+    }
+  }
+
+  const handleSaveAction = async (action: NotationAction) => {
+    let updated: NotationAction[]
+    if (editingActionIndex !== null) {
+      updated = actions.map((a, i) => (i === editingActionIndex ? action : a))
+    } else {
+      updated = [...actions, action]
+    }
+    try {
+      setError(null)
+      await saveActions(notation.id, updated)
+      setAddingAction(false)
+      setEditingActionIndex(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save action')
+    }
+  }
+
+  const codeContextStartLine = notation.location.endLine
+    ? notation.location.endLine - notation.codeContext.length + 1
+    : notation.location.line
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
@@ -51,6 +118,12 @@ export function NotationDetail() {
       </div>
 
       <h1 style={{ fontSize: '22px', fontWeight: 600, margin: '0 0 16px 0' }}>{notation.description}</h1>
+
+      {error && (
+        <div style={{ padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', color: '#dc2626', fontSize: '13px', marginBottom: '16px' }}>
+          {error}
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
         <Detail label="Status" value={notation.status} />
@@ -86,9 +159,11 @@ export function NotationDetail() {
       {notation.codeContext.length > 0 && (
         <div style={{ marginBottom: '20px' }}>
           <SectionLabel>Code Context</SectionLabel>
-          <pre style={{ background: '#1e293b', color: '#e2e8f0', padding: '12px', borderRadius: '6px', fontSize: '13px', overflow: 'auto', margin: 0 }}>
-            {notation.codeContext.join('\n')}
-          </pre>
+          <CodeBlock
+            code={notation.codeContext.join('\n')}
+            showLineNumbers
+            startLine={codeContextStartLine}
+          />
         </div>
       )}
 
@@ -112,11 +187,135 @@ export function NotationDetail() {
         </div>
       )}
 
+      <div style={{ marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+          <SectionLabel>Actions</SectionLabel>
+          {!addingAction && editingActionIndex === null && (
+            <button
+              onClick={() => setAddingAction(true)}
+              style={{
+                padding: '2px 8px',
+                fontSize: '12px',
+                background: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              + Add Action
+            </button>
+          )}
+        </div>
+        {actions.length === 0 && !addingAction && (
+          <p style={{ fontSize: '13px', color: '#9ca3af', margin: 0 }}>No actions configured</p>
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {actions.map((action, i) =>
+            editingActionIndex === i ? (
+              <ActionForm
+                key={i}
+                initial={action}
+                onSubmit={handleSaveAction}
+                onCancel={() => setEditingActionIndex(null)}
+              />
+            ) : (
+              <ActionDisplay
+                key={i}
+                action={action}
+                onEdit={() => setEditingActionIndex(i)}
+                onDelete={() => handleDeleteAction(i)}
+              />
+            )
+          )}
+          {addingAction && (
+            <ActionForm
+              onSubmit={handleSaveAction}
+              onCancel={() => setAddingAction(false)}
+            />
+          )}
+        </div>
+      </div>
+
       <div style={{ marginTop: '24px' }}>
-        <SectionLabel>Raw Block</SectionLabel>
-        <pre style={{ background: '#f9fafb', padding: '12px', borderRadius: '6px', fontSize: '12px', overflow: 'auto', margin: 0, color: '#6b7280' }}>
-          {notation.rawBlock}
-        </pre>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+          <SectionLabel>Raw Block</SectionLabel>
+          {!editing && (
+            <button
+              onClick={handleEdit}
+              style={{
+                padding: '2px 8px',
+                fontSize: '12px',
+                background: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Edit
+            </button>
+          )}
+        </div>
+        {editing ? (
+          <div>
+            <textarea
+              value={sourceContent}
+              onChange={(e) => setSourceContent(e.target.value)}
+              spellCheck={false}
+              style={{
+                width: '100%',
+                minHeight: '200px',
+                fontFamily: 'monospace',
+                fontSize: '13px',
+                background: '#1e293b',
+                color: '#e2e8f0',
+                padding: '12px',
+                borderRadius: '6px',
+                border: '1px solid #334155',
+                resize: 'vertical',
+                boxSizing: 'border-box',
+              }}
+            />
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                style={{
+                  padding: '6px 16px',
+                  fontSize: '13px',
+                  background: saving ? '#9ca3af' : '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: saving ? 'default' : 'pointer',
+                }}
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                disabled={saving}
+                style={{
+                  padding: '6px 16px',
+                  fontSize: '13px',
+                  background: '#f3f4f6',
+                  color: '#374151',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <CodeBlock
+            code={notation.rawBlock}
+            startLine={notation.location.line}
+          />
+        )}
       </div>
     </div>
   )

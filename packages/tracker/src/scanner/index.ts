@@ -1,5 +1,6 @@
 export { parseAttributes } from './attribute-parser'
 export type { ParsedAttributes } from './attribute-parser'
 export { parseActions } from './action-parser'
+export { serializeAction, serializeActions } from './action-serializer'
 export { parseFileContent } from './notation-parser'
 export { scanFiles } from './file-scanner'

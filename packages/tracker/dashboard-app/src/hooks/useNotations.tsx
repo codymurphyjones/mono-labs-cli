@@ -1,5 +1,11 @@
 import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react'
 
+export interface NotationAction {
+  verb: string
+  raw: string
+  args: { verb: string; [key: string]: string }
+}
+
 interface Notation {
   id: string
   type: string
@@ -15,7 +21,7 @@ interface Notation {
   tags: string[]
   dueDate?: string
   createdDate?: string
-  actions: unknown[]
+  actions: NotationAction[]
   relationships: string[]
   rawBlock: string
   scannedAt: string

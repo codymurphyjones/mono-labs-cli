@@ -13,13 +13,13 @@ const PRIORITIES = ['critical', 'high', 'medium', 'low', 'minimal']
 export function Dashboard() {
   const { notations, stats, connected } = useNotations()
   const [search, setSearch] = useState('')
-  const [filterType, setFilterType] = useState('')
+  const [filterType, setFilterType] = useState<string[]>([])
   const [filterStatus, setFilterStatus] = useState('')
   const [filterPriority, setFilterPriority] = useState('')
 
   const filtered = useMemo(() => {
     return notations.filter((n) => {
-      if (filterType && n.type !== filterType) return false
+      if (filterType.length > 0 && !filterType.includes(n.type)) return false
       if (filterStatus && n.status !== filterStatus) return false
       if (filterPriority && n.priority !== filterPriority) return false
       if (search) {
@@ -64,7 +64,7 @@ export function Dashboard() {
           types={TYPES}
           statuses={STATUSES}
           priorities={PRIORITIES}
-          selectedType={filterType}
+          selectedTypes={filterType}
           selectedStatus={filterStatus}
           selectedPriority={filterPriority}
           onTypeChange={setFilterType}
