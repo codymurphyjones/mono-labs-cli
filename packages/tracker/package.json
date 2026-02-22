@@ -27,13 +27,13 @@
   ],
   "scripts": {
     "build": "tsc",
-    "build:dashboard": "cd dashboard-app && npx vite build",
-    "build:all": "tsc && cd dashboard-app && npx vite build",
+    "build:dashboard": "npx vite build --config dashboard-app/vite.config.ts",
+    "build:all": "tsc && npx vite build --config dashboard-app/vite.config.ts",
     "test": "vitest run",
-    "deploy": "tsc && cd dashboard-app && npx vite build && cd .. && npm publish --access public --registry https://registry.npmjs.org/",
-    "release:patch": "npm version patch -m \"chore: release %s\" && tsc && cd dashboard-app && npx vite build && cd .. && npm publish --access public",
-    "release:minor": "npm version minor -m \"chore: release %s\" && tsc && cd dashboard-app && npx vite build && cd .. && npm publish --access public",
-    "release:major": "npm version major -m \"chore: release %s\" && tsc && cd dashboard-app && npx vite build && cd .. && npm publish --access public"
+    "deploy": "tsc && npx vite build --config dashboard-app/vite.config.ts && npm publish --access public --registry https://registry.npmjs.org/",
+    "release:patch": "npm version patch -m \"chore: release %s\" && tsc && npx vite build --config dashboard-app/vite.config.ts && npm publish --access public",
+    "release:minor": "npm version minor -m \"chore: release %s\" && tsc && npx vite build --config dashboard-app/vite.config.ts && npm publish --access public",
+    "release:major": "npm version major -m \"chore: release %s\" && tsc && npx vite build --config dashboard-app/vite.config.ts && npm publish --access public"
   },
   "license": "MIT",
   "dependencies": {
