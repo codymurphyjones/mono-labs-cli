@@ -1,6 +1,6 @@
 {
   "name": "@mono-labs/tracker",
-  "version": "0.1.272",
+  "version": "0.1.273",
   "type": "commonjs",
   "description": "Code notation tracker for scanning, parsing, and managing structured comment markers",
   "main": "dist/index.js",
@@ -37,7 +37,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@mono-labs/shared": "0.1.272",
+    "@mono-labs/shared": "0.1.273",
     "chokidar": "^4.0.0",
     "cors": "^2.8.5",
     "express": "^4.21.0",
