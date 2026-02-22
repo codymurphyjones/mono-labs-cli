@@ -1,6 +1,6 @@
 {
   "name": "@mono-labs/shared",
-  "version": "0.1.268",
+  "version": "0.1.269",
   "type": "commonjs",
   "description": "Shared utilities for mono-labs",
   "main": "dist/index.js",
