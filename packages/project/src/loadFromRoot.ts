@@ -1,5 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import { findProjectRoot } from '@mono-labs/shared';
+
+// Re-export so existing consumers aren't broken
+export { findProjectRoot } from '@mono-labs/shared';
 
 /* ------------------------------------------------------------------
  * Types
@@ -25,27 +29,6 @@ export interface MonoConfig {
 /* ------------------------------------------------------------------
  * Helpers
  * ------------------------------------------------------------------ */
-
-/**
- * Walk up from cwd until we find a directory containing package.json.
- * This is treated as the project root.
- */
-export function findProjectRoot(startDir: string = process.cwd()): string {
-	let current = startDir;
-
-	while (true) {
-		const pkg = path.join(current, 'package.json');
-		if (fs.existsSync(pkg)) return current;
-
-		const parent = path.dirname(current);
-		if (parent === current) break;
-
-		current = parent;
-	}
-
-	// Fallback: use cwd
-	return startDir;
-}
 
 export function getRootDirectory(): string {
 	return findProjectRoot();

@@ -44,3 +44,7 @@ export type { ValidationError } from './manager'
 export { executeAction, registerActionHandler } from './executor'
 export type { ActionResult, ActionHandler } from './executor'
 export { handleReplace, handleRemove, handleRename } from './executor'
+
+// Dashboard
+export { startDashboard } from './dashboard'
+export type { DashboardConfig, DashboardServer } from './dashboard'

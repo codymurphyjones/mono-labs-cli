@@ -5,15 +5,30 @@
   "description": "Code notation tracker for scanning, parsing, and managing structured comment markers",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "tracker": "./bin/tracker.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./dashboard": {
+      "types": "./dist/dashboard/index.d.ts",
+      "require": "./dist/dashboard/index.js",
+      "default": "./dist/dashboard/index.js"
     }
   },
+  "files": [
+    "dist/",
+    "dist-dashboard/",
+    "bin/"
+  ],
   "scripts": {
     "build": "tsc",
+    "build:dashboard": "cd dashboard-app && npx vite build",
+    "build:all": "tsc && cd dashboard-app && npx vite build",
     "test": "vitest run",
     "deploy": "tsc && npm publish --access public --registry https://registry.npmjs.org/",
     "release:patch": "npm version patch -m \"chore: release %s\" && npm publish --access public",
@@ -22,11 +37,24 @@
   },
   "license": "MIT",
   "dependencies": {
-    "fast-glob": "^3.3.3"
+    "@mono-labs/shared": "0.1.267",
+    "chokidar": "^4.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "fast-glob": "^3.3.3",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
     "@types/node": "^25.1.0",
+    "@types/ws": "^8.5.13",
+    "@vitejs/plugin-react": "^4.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.0.0",
     "typescript": "^5.9.3",
+    "vite": "^6.0.0",
     "vitest": "^3.0.0"
   }
 }

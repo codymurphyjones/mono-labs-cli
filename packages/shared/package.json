@@ -3,13 +3,13 @@
   "version": "0.1.267",
   "type": "commonjs",
   "description": "Shared utilities for mono-labs",
-  "main": "dist/writeLog.js",
-  "types": "dist/writeLog.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/writeLog.d.ts",
-      "require": "./dist/writeLog.js",
-      "default": "./dist/writeLog.js"
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "files": [

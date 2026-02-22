@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { findWorkspaceRoot } from '@mono-labs/shared'
 
 /* ──────────────────────────────────────────────────────────
  * Types
@@ -72,38 +73,16 @@ function detectWorkspaceAndConfigPath(
   configFileName: string
 ): WorkspaceDetectResult {
   const cwd = path.resolve(startDir)
+  const result = findWorkspaceRoot(cwd)
 
-  const isWorkspaceRootDir = (dir: string): boolean => {
-    const pkgPath = path.join(dir, 'package.json')
-    if (fs.existsSync(pkgPath)) {
-      try {
-        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
-        if (pkg?.workspaces) return true
-      } catch {
-        // ignore
-      }
+  if (result.isWorkspace || result.root !== cwd) {
+    return {
+      cwd,
+      workspaceRoot: result.root,
+      isWorkspaceRoot: result.root === cwd,
+      configDir: result.root,
+      configPath: path.join(result.root, configFileName),
     }
-
-    const markers = ['pnpm-workspace.yaml', 'lerna.json', 'turbo.json', 'nx.json', '.git']
-
-    return markers.some((m) => fs.existsSync(path.join(dir, m)))
-  }
-
-  let dir = cwd
-  while (true) {
-    if (isWorkspaceRootDir(dir)) {
-      return {
-        cwd,
-        workspaceRoot: dir,
-        isWorkspaceRoot: dir === cwd,
-        configDir: dir,
-        configPath: path.join(dir, configFileName),
-      }
-    }
-
-    const parent = path.dirname(dir)
-    if (parent === dir) break
-    dir = parent
   }
 
   return {
