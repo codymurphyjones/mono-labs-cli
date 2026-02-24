@@ -1,6 +1,6 @@
 {
   "name": "@mono-labs/project",
-  "version": "0.1.275",
+  "version": "0.1.276",
   "type": "commonjs",
   "description": "Project configuration utilities for mono-labs",
   "main": "dist/index.js",
@@ -32,7 +32,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@mono-labs/shared": "0.1.275",
+    "@mono-labs/shared": "0.1.276",
     "dotenv": "^17.2.0"
   },
   "peerDependencies": {
