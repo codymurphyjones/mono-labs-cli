@@ -1,3 +1,7 @@
 export { handleReplace } from './replace-action'
 export { handleRemove } from './remove-action'
 export { handleRename } from './rename-action'
+export { handleInsert } from './insert-action'
+export { handleExtract } from './extract-action'
+export { handleMove } from './move-action'
+export { handleWrap } from './wrap-action'

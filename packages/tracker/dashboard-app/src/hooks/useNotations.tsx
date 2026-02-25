@@ -27,6 +27,10 @@ interface Notation {
   scannedAt: string
   debt?: { hours: number; compounding: string }
   performance?: { before: string; after: string; unit: string }
+  eolDate?: string
+  replacement?: string
+  blame?: { author: string; email: string; date: string; commitHash: string }
+  linkedIssue?: string
 }
 
 interface NotationStats {
@@ -41,16 +45,34 @@ interface NotationStats {
   totalDebtHours: number
 }
 
+interface GateViolation {
+  notationId: string
+  description: string
+  priority: string
+  file: string
+  line: number
+}
+
+interface GateResult {
+  passed: boolean
+  violations: GateViolation[]
+  summary: string
+}
+
 interface NotationsState {
   notations: Notation[]
   stats: NotationStats | null
   connected: boolean
+  healthScore: number | null
+  gateResult: GateResult | null
 }
 
 const NotationsContext = createContext<NotationsState>({
   notations: [],
   stats: null,
   connected: false,
+  healthScore: null,
+  gateResult: null,
 })
 
 export function useNotations() {
@@ -61,12 +83,14 @@ export function NotationsProvider({ children }: { children: ReactNode }) {
   const [notations, setNotations] = useState<Notation[]>([])
   const [stats, setStats] = useState<NotationStats | null>(null)
   const [connected, setConnected] = useState(false)
+  const [healthScore, setHealthScore] = useState<number | null>(null)
+  const [gateResult, setGateResult] = useState<GateResult | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
     function connect() {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const ws = new WebSocket(`${protocol}//${window.location.host}`)
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws`)
       wsRef.current = ws
 
       ws.onopen = () => setConnected(true)
@@ -82,6 +106,8 @@ export function NotationsProvider({ children }: { children: ReactNode }) {
           if (data.type === 'init' || data.type === 'update') {
             setNotations(data.notations)
             setStats(data.stats)
+            if (data.healthScore !== undefined) setHealthScore(data.healthScore)
+            if (data.gateResult !== undefined) setGateResult(data.gateResult)
           }
         } catch {
           // ignore malformed messages
@@ -97,7 +123,7 @@ export function NotationsProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <NotationsContext.Provider value={{ notations, stats, connected }}>
+    <NotationsContext.Provider value={{ notations, stats, connected, healthScore, gateResult }}>
       {children}
     </NotationsContext.Provider>
   )

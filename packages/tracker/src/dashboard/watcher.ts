@@ -11,7 +11,7 @@ export function createFileWatcher(
 	config: TrackerConfig,
 	projectRoot: string,
 	manager: NotationManager,
-	onUpdate: () => void
+	onUpdate: () => void | Promise<void>
 ): FileWatcher {
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -22,7 +22,7 @@ export function createFileWatcher(
 			try {
 				const notations = await scanFiles(config, projectRoot)
 				manager.setAll(notations)
-				onUpdate()
+				await onUpdate()
 			} catch (err) {
 				console.error('[tracker] Re-scan failed:', err)
 			}

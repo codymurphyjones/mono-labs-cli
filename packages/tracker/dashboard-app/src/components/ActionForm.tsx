@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import type { NotationAction } from '../hooks/useNotations'
+import { Input } from './ui/input'
+import { Button } from './ui/button'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select'
 
 interface ActionFormProps {
   initial?: NotationAction
@@ -120,107 +123,67 @@ export function ActionForm({ initial, onSubmit, onCancel }: ActionFormProps) {
   const currentFields = VERB_FIELDS[verb] || []
 
   return (
-    <div
-      style={{
-        padding: '10px',
-        background: '#f9fafb',
-        borderRadius: '6px',
-        border: '1px solid #e5e7eb',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-      }}
-    >
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        <label style={{ fontSize: '12px', color: '#6b7280', flexShrink: 0 }}>Verb</label>
-        <select
+    <div className="p-2.5 bg-card rounded-md border flex flex-col gap-2">
+      <div className="flex gap-2 items-center">
+        <label className="text-xs text-muted-foreground shrink-0">Verb</label>
+        <Select
           value={verb}
-          onChange={(e) => {
-            setVerb(e.target.value)
+          onValueChange={(v) => {
+            setVerb(v)
             setFields({})
           }}
-          style={{
-            padding: '4px 8px',
-            fontSize: '13px',
-            borderRadius: '4px',
-            border: '1px solid #d1d5db',
-          }}
         >
-          {VERBS.map((v) => (
-            <option key={v} value={v}>
-              {v}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger size="sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {VERBS.map((v) => (
+              <SelectItem key={v} value={v}>
+                {v}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {currentFields.map((field) => (
-        <div key={field.key} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <label style={{ fontSize: '12px', color: '#6b7280', minWidth: '80px', flexShrink: 0 }}>{field.label}</label>
-          <input
+        <div key={field.key} className="flex gap-2 items-center">
+          <label className="text-xs text-muted-foreground min-w-[80px] shrink-0">{field.label}</label>
+          <Input
             type="text"
             value={fields[field.key] || ''}
             onChange={(e) => handleFieldChange(field.key, e.target.value)}
-            style={{
-              flex: 1,
-              padding: '4px 8px',
-              fontSize: '13px',
-              borderRadius: '4px',
-              border: '1px solid #d1d5db',
-              fontFamily: 'monospace',
-            }}
+            className="flex-1 font-mono h-8 text-[13px]"
           />
         </div>
       ))}
 
       {verb === 'insert' && (
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <label style={{ fontSize: '12px', color: '#6b7280', minWidth: '80px', flexShrink: 0 }}>Position</label>
-          <select
-            value={position}
-            onChange={(e) => setPosition(e.target.value)}
-            style={{
-              padding: '4px 8px',
-              fontSize: '13px',
-              borderRadius: '4px',
-              border: '1px solid #d1d5db',
-            }}
-          >
-            <option value="before">before</option>
-            <option value="after">after</option>
-          </select>
+        <div className="flex gap-2 items-center">
+          <label className="text-xs text-muted-foreground min-w-[80px] shrink-0">Position</label>
+          <Select value={position} onValueChange={setPosition}>
+            <SelectTrigger size="sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="before">before</SelectItem>
+              <SelectItem value="after">after</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-        <button
+      <div className="flex gap-2 mt-1">
+        <Button
           onClick={handleSubmit}
-          style={{
-            padding: '4px 12px',
-            fontSize: '12px',
-            background: '#10b981',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
+          size="sm"
+          className="bg-emerald-600 hover:bg-emerald-600/90 text-emerald-50"
         >
           {initial ? 'Update' : 'Add'}
-        </button>
-        <button
-          onClick={onCancel}
-          style={{
-            padding: '4px 12px',
-            fontSize: '12px',
-            background: '#f3f4f6',
-            color: '#374151',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
+        </Button>
+        <Button onClick={onCancel} variant="outline" size="sm">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   )

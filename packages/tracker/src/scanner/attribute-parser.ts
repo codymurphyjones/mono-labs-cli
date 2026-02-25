@@ -12,6 +12,8 @@ export interface ParsedAttributes {
 	performance?: PerformanceImpact
 	debt?: TechnicalDebt
 	relationships: string[]
+	eolDate?: string
+	replacement?: string
 }
 
 const PRIORITY_MAP: Record<string, Priority> = {
@@ -112,6 +114,16 @@ function applyKeyValue(key: string, value: string, attrs: ParsedAttributes): voi
 		case 'depends on':
 		case 'related':
 			attrs.relationships.push(...value.split(',').map((r) => r.trim()).filter(Boolean))
+			break
+		case 'eol':
+		case 'eoldate':
+		case 'eol date': {
+			const parsed = parseDate(value)
+			if (parsed) attrs.eolDate = parsed
+			break
+		}
+		case 'replacement':
+			attrs.replacement = value
 			break
 	}
 }

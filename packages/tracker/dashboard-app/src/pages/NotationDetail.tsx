@@ -1,12 +1,26 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useNotations } from '../hooks/useNotations'
-import { fetchSource, saveSource, saveActions } from '../hooks/useQuery'
-import { typeColors } from '../constants'
+import { fetchSource, saveSource, saveActions, createIssue } from '../hooks/useQuery'
+import { cn } from '@/lib/utils'
+import { getTypeConfig, getStatusConfig, getPriorityConfig } from '@/lib/tracker-config'
 import { CodeBlock } from '../components/CodeBlock'
 import { ActionDisplay } from '../components/ActionDisplay'
 import { ActionForm } from '../components/ActionForm'
+import { AuthorAvatar } from '../components/AuthorAvatar'
+import { SuggestedFix } from '../components/SuggestedFix'
+import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
+import { ThemeToggle } from '../components/theme-toggle'
+import { Textarea } from '../components/ui/textarea'
+import { Separator } from '../components/ui/separator'
 import type { NotationAction } from '../hooks/useNotations'
+
+interface IntegrationConfig {
+  github: boolean
+  jira: boolean
+  ai: boolean
+}
 
 export function NotationDetail() {
   const { id } = useParams<{ id: string }>()
@@ -21,14 +35,24 @@ export function NotationDetail() {
 
   const [addingAction, setAddingAction] = useState(false)
   const [editingActionIndex, setEditingActionIndex] = useState<number | null>(null)
+  const [integrations, setIntegrations] = useState<IntegrationConfig>({ github: false, jira: false, ai: false })
+  const [issueUrl, setIssueUrl] = useState<string | null>(null)
+  const [creatingIssue, setCreatingIssue] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/config')
+      .then((res) => res.json())
+      .then((data) => setIntegrations(data.integrations || {}))
+      .catch(() => {})
+  }, [])
 
   if (!notation) {
     return (
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
-        <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', fontSize: '14px' }}>
+      <div className="max-w-[800px] mx-auto p-6">
+        <Button variant="link" className="text-sm text-primary p-0" onClick={() => navigate('/')}>
           &larr; Back
-        </button>
-        <p style={{ color: '#9ca3af', marginTop: '40px', textAlign: 'center' }}>Notation not found</p>
+        </Button>
+        <p className="text-muted-foreground mt-10 text-center">Notation not found</p>
       </div>
     )
   }
@@ -91,73 +115,154 @@ export function NotationDetail() {
     }
   }
 
+  const handleCreateIssue = async (provider: 'github' | 'jira') => {
+    try {
+      setCreatingIssue(true)
+      setError(null)
+      const result = await createIssue(notation.id, provider)
+      setIssueUrl(result.url)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create issue')
+    } finally {
+      setCreatingIssue(false)
+    }
+  }
+
   const codeContextStartLine = notation.location.endLine
     ? notation.location.endLine - notation.codeContext.length + 1
     : notation.location.line
 
-  return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
-      <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', fontSize: '14px', marginBottom: '16px' }}>
-        &larr; Back to dashboard
-      </button>
+  const tConfig = getTypeConfig(notation.type)
+  const sConfig = getStatusConfig(notation.status)
+  const pConfig = notation.priority ? getPriorityConfig(notation.priority) : undefined
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-        <span
-          style={{
-            fontSize: '13px',
-            fontWeight: 700,
-            padding: '3px 8px',
-            borderRadius: '4px',
-            color: 'white',
-            background: typeColors[notation.type] || '#6b7280',
-          }}
-        >
-          {notation.type}
-        </span>
-        <span style={{ fontSize: '13px', color: '#9ca3af' }}>{notation.id}</span>
+  const displayedIssueUrl = issueUrl || notation.linkedIssue
+
+  return (
+    <div className="max-w-[800px] mx-auto p-6">
+      <div className="flex justify-between items-center mb-4">
+        <Button variant="link" className="text-sm text-primary p-0" onClick={() => navigate('/')}>
+          &larr; Back to dashboard
+        </Button>
+        <ThemeToggle />
       </div>
 
-      <h1 style={{ fontSize: '22px', fontWeight: 600, margin: '0 0 16px 0' }}>{notation.description}</h1>
+      <div className="flex items-center gap-2.5 mb-2">
+        <Badge
+          variant="outline"
+          className={cn('text-[13px] font-bold', tConfig.color, tConfig.bgColor, tConfig.borderColor)}
+        >
+          {notation.type}
+        </Badge>
+        <span className="text-[13px] text-muted-foreground">{notation.id}</span>
+      </div>
+
+      <h1 className="text-[22px] font-semibold m-0 mb-4 text-foreground">{notation.description}</h1>
 
       {error && (
-        <div style={{ padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', color: '#dc2626', fontSize: '13px', marginBottom: '16px' }}>
+        <div className="p-2 px-3 bg-red-500/10 border border-red-500/30 rounded-md text-red-400 text-[13px] mb-4">
           {error}
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-        <Detail label="Status" value={notation.status} />
-        <Detail label="Priority" value={notation.priority || 'none'} />
+      <div className="grid grid-cols-2 gap-3 mb-5 p-4 bg-card rounded-lg border">
+        <Detail label="Status" value={sConfig.label} valueClass={sConfig.color} />
+        <Detail label="Priority" value={notation.priority || 'none'} valueClass={pConfig?.color} />
         <Detail label="Assignee" value={notation.assignee || 'unassigned'} />
         <Detail label="Due Date" value={notation.dueDate || 'none'} />
         <Detail label="File" value={`${notation.location.file}:${notation.location.line}`} />
         <Detail label="Risk" value={notation.risk || 'none'} />
+        {notation.author && <Detail label="Comment Author" value={notation.author} />}
+        {notation.blame && (
+          <div>
+            <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wide">Git Blame Author</span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <AuthorAvatar name={notation.blame.author} email={notation.blame.email} size={20} />
+              <span className="text-sm text-foreground">{notation.blame.author}</span>
+            </div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">
+              {notation.blame.commitHash.slice(0, 8)} &middot; {new Date(notation.blame.date).toLocaleDateString()}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* EOL info for deprecations */}
+      {notation.type === 'DEPRECATION' && (notation.eolDate || notation.replacement) && (
+        <div className="p-2.5 px-3.5 bg-pink-500/5 border border-pink-500/20 rounded-md mb-4">
+          {notation.eolDate && (
+            <div className={cn('text-[13px] text-pink-600 dark:text-pink-300', notation.replacement && 'mb-1')}>
+              EOL Date: <strong>{notation.eolDate}</strong>
+            </div>
+          )}
+          {notation.replacement && (
+            <div className="text-[13px] text-emerald-400">
+              Replacement: <strong>{notation.replacement}</strong>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Issue tracker integration */}
+      <div className="mb-4 flex gap-2 items-center">
+        {integrations.github && !displayedIssueUrl && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs text-primary bg-primary/15 border-primary/30 hover:bg-primary/25"
+            onClick={() => handleCreateIssue('github')}
+            disabled={creatingIssue}
+          >
+            {creatingIssue ? 'Creating...' : 'Create GitHub Issue'}
+          </Button>
+        )}
+        {integrations.jira && !displayedIssueUrl && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs text-blue-400 bg-blue-500/15 border-blue-500/30 hover:bg-blue-500/25"
+            onClick={() => handleCreateIssue('jira')}
+            disabled={creatingIssue}
+          >
+            {creatingIssue ? 'Creating...' : 'Create Jira Issue'}
+          </Button>
+        )}
+        {displayedIssueUrl && (
+          <a
+            href={displayedIssueUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-primary underline"
+          >
+            Linked Issue: {displayedIssueUrl}
+          </a>
+        )}
       </div>
 
       {notation.tags.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
+        <div className="mb-5">
           <SectionLabel>Tags</SectionLabel>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          <div className="flex gap-1.5 flex-wrap">
             {notation.tags.map((tag) => (
-              <span key={tag} style={{ fontSize: '12px', padding: '2px 8px', background: '#e0e7ff', color: '#4338ca', borderRadius: '10px' }}>
+              <Badge key={tag} variant="secondary" className="text-xs text-primary bg-primary/10 border-primary/30">
                 {tag}
-              </span>
+              </Badge>
             ))}
           </div>
         </div>
       )}
 
       {notation.body.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
+        <div className="mb-5">
           <SectionLabel>Body</SectionLabel>
-          <pre style={{ background: '#f9fafb', padding: '12px', borderRadius: '6px', fontSize: '13px', overflow: 'auto', margin: 0 }}>
+          <pre className="bg-card border p-3 rounded-md text-[13px] overflow-auto m-0 text-secondary-foreground font-mono">
             {notation.body.join('\n')}
           </pre>
         </div>
       )}
 
       {notation.codeContext.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
+        <div className="mb-5">
           <SectionLabel>Code Context</SectionLabel>
           <CodeBlock
             code={notation.codeContext.join('\n')}
@@ -167,50 +272,46 @@ export function NotationDetail() {
         </div>
       )}
 
+      {/* AI Suggested Fix */}
+      {integrations.ai && (
+        <SuggestedFix notationId={notation.id} notationType={notation.type} />
+      )}
+
       {notation.relationships.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
+        <div className="mb-5">
           <SectionLabel>Relationships</SectionLabel>
-          <ul style={{ margin: 0, paddingLeft: '20px' }}>
+          <ul className="m-0 pl-5">
             {notation.relationships.map((rel, i) => (
-              <li key={i} style={{ fontSize: '14px', color: '#374151' }}>{rel}</li>
+              <li key={i} className="text-sm text-secondary-foreground">{rel}</li>
             ))}
           </ul>
         </div>
       )}
 
       {notation.debt && (
-        <div style={{ marginBottom: '20px' }}>
+        <div className="mb-5">
           <SectionLabel>Technical Debt</SectionLabel>
-          <p style={{ fontSize: '14px', color: '#374151', margin: 0 }}>
+          <p className="text-sm text-secondary-foreground m-0">
             {notation.debt.hours}h (compounding: {notation.debt.compounding})
           </p>
         </div>
       )}
 
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+      <Separator className="my-5" />
+
+      <div className="mb-5">
+        <div className="flex items-center gap-2 mb-1.5">
           <SectionLabel>Actions</SectionLabel>
           {!addingAction && editingActionIndex === null && (
-            <button
-              onClick={() => setAddingAction(true)}
-              style={{
-                padding: '2px 8px',
-                fontSize: '12px',
-                background: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
+            <Button onClick={() => setAddingAction(true)} size="sm">
               + Add Action
-            </button>
+            </Button>
           )}
         </div>
         {actions.length === 0 && !addingAction && (
-          <p style={{ fontSize: '13px', color: '#9ca3af', margin: 0 }}>No actions configured</p>
+          <p className="text-[13px] text-muted-foreground m-0">No actions configured</p>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div className="flex flex-col gap-1.5">
           {actions.map((action, i) =>
             editingActionIndex === i ? (
               <ActionForm
@@ -237,77 +338,36 @@ export function NotationDetail() {
         </div>
       </div>
 
-      <div style={{ marginTop: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+      <Separator className="my-5" />
+
+      <div className="mt-6">
+        <div className="flex items-center gap-2 mb-1.5">
           <SectionLabel>Raw Block</SectionLabel>
           {!editing && (
-            <button
-              onClick={handleEdit}
-              style={{
-                padding: '2px 8px',
-                fontSize: '12px',
-                background: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
+            <Button onClick={handleEdit} size="sm">
               Edit
-            </button>
+            </Button>
           )}
         </div>
         {editing ? (
           <div>
-            <textarea
+            <Textarea
               value={sourceContent}
               onChange={(e) => setSourceContent(e.target.value)}
               spellCheck={false}
-              style={{
-                width: '100%',
-                minHeight: '200px',
-                fontFamily: 'monospace',
-                fontSize: '13px',
-                background: '#1e293b',
-                color: '#e2e8f0',
-                padding: '12px',
-                borderRadius: '6px',
-                border: '1px solid #334155',
-                resize: 'vertical',
-                boxSizing: 'border-box',
-              }}
+              className="min-h-[200px] font-mono text-[13px] resize-y"
             />
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-              <button
+            <div className="flex gap-2 mt-2">
+              <Button
                 onClick={handleSave}
                 disabled={saving}
-                style={{
-                  padding: '6px 16px',
-                  fontSize: '13px',
-                  background: saving ? '#9ca3af' : '#10b981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: saving ? 'default' : 'pointer',
-                }}
+                className="bg-emerald-600 hover:bg-emerald-600/90 text-emerald-50"
               >
                 {saving ? 'Saving...' : 'Save'}
-              </button>
-              <button
-                onClick={handleCancelEdit}
-                disabled={saving}
-                style={{
-                  padding: '6px 16px',
-                  fontSize: '13px',
-                  background: '#f3f4f6',
-                  color: '#374151',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
+              </Button>
+              <Button onClick={handleCancelEdit} disabled={saving} variant="outline">
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
@@ -321,15 +381,15 @@ export function NotationDetail() {
   )
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+function Detail({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) {
   return (
     <div>
-      <span style={{ fontSize: '12px', color: '#6b7280', textTransform: 'uppercase' }}>{label}</span>
-      <div style={{ fontSize: '14px', color: '#111827' }}>{value}</div>
+      <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wide">{label}</span>
+      <div className={cn('text-sm mt-0.5', valueClass || 'text-foreground')}>{value}</div>
     </div>
   )
 }
 
 function SectionLabel({ children }: { children: string }) {
-  return <div style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', marginBottom: '6px' }}>{children}</div>
+  return <div className="text-[11px] font-semibold text-muted-foreground/60 uppercase tracking-wide mb-1.5">{children}</div>
 }

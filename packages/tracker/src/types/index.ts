@@ -21,5 +21,5 @@ export type {
 	NotationQuery,
 	NotationStats,
 } from './notation'
-export type { TrackerConfig } from './config'
+export type { TrackerConfig, SecurityGateConfig, IntegrationsConfig } from './config'
 export { DEFAULT_CONFIG } from './config'

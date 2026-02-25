@@ -6,6 +6,7 @@ export const MarkerType = {
 	NOTE: 'NOTE',
 	OPTIMIZE: 'OPTIMIZE',
 	SECURITY: 'SECURITY',
+	DEPRECATION: 'DEPRECATION',
 } as const
 export type MarkerType = (typeof MarkerType)[keyof typeof MarkerType]
 

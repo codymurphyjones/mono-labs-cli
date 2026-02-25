@@ -28,9 +28,13 @@ const testConfig: TrackerConfig = {
 	rootDir: '/tmp/test-project',
 	include: ['**/*.ts'],
 	exclude: ['**/node_modules/**'],
-	markers: ['TODO', 'FIXME', 'BUG', 'HACK', 'NOTE', 'OPTIMIZE', 'SECURITY'],
+	markers: ['TODO', 'FIXME', 'BUG', 'HACK', 'NOTE', 'OPTIMIZE', 'SECURITY', 'DEPRECATION'],
 	storagePath: '/tmp/test-tracker/notations.jsonl',
+	snapshotPath: '/tmp/test-tracker/snapshots.jsonl',
 	idPrefix: 'N',
+	gitBlame: false,
+	securityGate: { enabled: false, blockOnCritical: true, blockOnHigh: false },
+	integrations: {},
 }
 
 describe('NotationManager', () => {

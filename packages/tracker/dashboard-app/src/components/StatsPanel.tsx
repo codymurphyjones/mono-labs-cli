@@ -1,3 +1,8 @@
+import { cn } from '@/lib/utils'
+import { getTypeConfig, STAT_BORDER_COLORS } from '@/lib/tracker-config'
+import { Sparkline } from './Sparkline'
+import { useSnapshots } from '../hooks/useSnapshots'
+
 interface Stats {
   total: number
   byType: Record<string, number>
@@ -12,47 +17,74 @@ interface StatsPanelProps {
   stats: Stats | null
 }
 
-const typeColors: Record<string, string> = {
-  TODO: '#3b82f6',
-  FIXME: '#f59e0b',
-  BUG: '#ef4444',
-  HACK: '#8b5cf6',
-  NOTE: '#6b7280',
-  OPTIMIZE: '#10b981',
-  SECURITY: '#dc2626',
+function StatCard({ label, value, borderClass, valueClass }: {
+  label: string
+  value: number | string
+  borderClass?: string
+  valueClass?: string
+}) {
+  return (
+    <div className={cn(
+      'p-3 px-4 bg-card rounded-lg border min-w-[100px]',
+      borderClass && `border-t-2 ${borderClass}`,
+    )}>
+      <div className="text-xs text-muted-foreground uppercase mb-1">{label}</div>
+      <div className={cn('text-2xl font-semibold text-foreground', valueClass)}>{value}</div>
+    </div>
+  )
 }
 
-function StatCard({ label, value, color }: { label: string; value: number | string; color?: string }) {
+function TypeCountCard({ type, count, sparklineData }: { type: string; count: number; sparklineData?: number[] }) {
+  const config = getTypeConfig(type)
+
   return (
-    <div
-      style={{
-        padding: '12px 16px',
-        background: '#f9fafb',
-        borderRadius: '8px',
-        borderLeft: color ? `4px solid ${color}` : undefined,
-        minWidth: '100px',
-      }}
-    >
-      <div style={{ fontSize: '12px', color: '#6b7280', textTransform: 'uppercase' }}>{label}</div>
-      <div style={{ fontSize: '24px', fontWeight: 600, color: color || '#111827' }}>{value}</div>
+    <div className={cn(
+      'p-2 px-3 bg-card rounded-md border min-w-[80px] flex items-center gap-2',
+      config.borderColor,
+    )}>
+      <span className={cn('text-[11px] font-semibold', config.color)}>
+        {type}
+      </span>
+      {sparklineData && sparklineData.length >= 2 && (
+        <Sparkline data={sparklineData} width={40} height={16} />
+      )}
+      <span className="text-base font-semibold text-foreground ml-auto">{count}</span>
     </div>
   )
 }
 
 export function StatsPanel({ stats }: StatsPanelProps) {
+  const { snapshots } = useSnapshots(30)
+
   if (!stats) return null
 
+  // Build sparkline data per type from snapshots
+  const typeSparklines: Record<string, number[]> = {}
+  for (const snap of snapshots) {
+    for (const [type, count] of Object.entries(snap.stats.byType)) {
+      if (!typeSparklines[type]) typeSparklines[type] = []
+      typeSparklines[type].push(count)
+    }
+  }
+
   return (
-    <div style={{ marginBottom: '24px' }}>
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
-        <StatCard label="Total" value={stats.total} />
-        <StatCard label="Overdue" value={stats.overdue} color="#ef4444" />
-        <StatCard label="Blocked" value={stats.blocked} color="#f59e0b" />
-        <StatCard label="Debt Hours" value={stats.totalDebtHours} color="#8b5cf6" />
+    <div className="mb-6">
+      {/* Primary stat cards */}
+      <div className="flex gap-3 flex-wrap mb-4">
+        <StatCard label="Total" value={stats.total} borderClass={STAT_BORDER_COLORS.total} />
+        <StatCard label="Overdue" value={stats.overdue} borderClass={STAT_BORDER_COLORS.overdue} valueClass={stats.overdue > 0 ? 'text-red-400' : undefined} />
+        <StatCard label="Blocked" value={stats.blocked} borderClass={STAT_BORDER_COLORS.blocked} valueClass={stats.blocked > 0 ? 'text-amber-400' : undefined} />
+        <StatCard label="Debt Hours" value={stats.totalDebtHours} borderClass={STAT_BORDER_COLORS.debtHours} />
       </div>
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+      {/* Type count cards */}
+      <div className="flex gap-2 flex-wrap">
         {Object.entries(stats.byType).map(([type, count]) => (
-          <StatCard key={type} label={type} value={count} color={typeColors[type]} />
+          <TypeCountCard
+            key={type}
+            type={type}
+            count={count}
+            sparklineData={typeSparklines[type]}
+          />
         ))}
       </div>
     </div>

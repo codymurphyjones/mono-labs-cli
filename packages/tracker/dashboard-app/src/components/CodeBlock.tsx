@@ -12,28 +12,13 @@ export function CodeBlock({ code, language = 'typescript', showLineNumbers, star
     <Highlight theme={themes.nightOwl} code={code} language={language}>
       {({ style, tokens, getLineProps, getTokenProps }) => (
         <pre
-          style={{
-            ...style,
-            padding: '12px',
-            borderRadius: '6px',
-            fontSize: '13px',
-            overflow: 'auto',
-            margin: 0,
-          }}
+          className="p-3 rounded-md text-[13px] overflow-auto m-0"
+          style={style}
         >
           {tokens.map((line, i) => (
             <div key={i} {...getLineProps({ line })}>
               {showLineNumbers && (
-                <span
-                  style={{
-                    display: 'inline-block',
-                    width: '3em',
-                    textAlign: 'right',
-                    marginRight: '1em',
-                    color: '#6b7280',
-                    userSelect: 'none',
-                  }}
-                >
+                <span className="inline-block w-[3em] text-right mr-4 text-gray-500 select-none">
                   {startLine + i}
                 </span>
               )}

@@ -1,41 +1,42 @@
-import { useState } from 'react'
+import { cn } from '@/lib/utils'
+import { Input } from './ui/input'
+import { Button } from './ui/button'
+
+export type ScanStatus = 'idle' | 'scanning' | 'success' | 'error'
 
 interface SearchBarProps {
   value: string
   onChange: (value: string) => void
   onScan: () => void
+  scanStatus?: ScanStatus
+  scanMessage?: string
 }
 
-export function SearchBar({ value, onChange, onScan }: SearchBarProps) {
+export function SearchBar({ value, onChange, onScan, scanStatus = 'idle', scanMessage }: SearchBarProps) {
+  const isScanning = scanStatus === 'scanning'
+
+  const label = isScanning ? 'Scanning...' : scanMessage || 'Re-scan'
+
   return (
-    <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-      <input
+    <div className="flex gap-2 mb-4">
+      <Input
         type="text"
         placeholder="Search notations..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={{
-          flex: 1,
-          padding: '8px 12px',
-          border: '1px solid #d1d5db',
-          borderRadius: '6px',
-          fontSize: '14px',
-        }}
+        className="flex-1"
       />
-      <button
+      <Button
         onClick={onScan}
-        style={{
-          padding: '8px 16px',
-          background: '#3b82f6',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          fontSize: '14px',
-        }}
+        disabled={isScanning}
+        variant={scanStatus === 'error' ? 'destructive' : 'default'}
+        className={cn(
+          scanStatus === 'success' && 'bg-emerald-600 hover:bg-emerald-600/90 text-white',
+          isScanning && 'opacity-70',
+        )}
       >
-        Re-scan
-      </button>
+        {label}
+      </Button>
     </div>
   )
 }

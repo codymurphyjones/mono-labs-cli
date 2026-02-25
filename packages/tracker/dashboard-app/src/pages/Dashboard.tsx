@@ -1,21 +1,33 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useNotations } from '../hooks/useNotations'
 import { triggerScan } from '../hooks/useQuery'
 import { StatsPanel } from '../components/StatsPanel'
-import { SearchBar } from '../components/SearchBar'
+import { SearchBar, type ScanStatus } from '../components/SearchBar'
 import { FilterSidebar } from '../components/FilterSidebar'
 import { NotationList } from '../components/NotationList'
+import { SecurityGate } from '../components/SecurityGate'
+import { HealthScore } from '../components/HealthScore'
+import { DeprecationPanel } from '../components/DeprecationPanel'
+import { BurnDownChart } from '../components/BurnDownChart'
+import { cn } from '@/lib/utils'
+import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
+import { ThemeToggle } from '../components/theme-toggle'
 
-const TYPES = ['TODO', 'FIXME', 'BUG', 'HACK', 'NOTE', 'OPTIMIZE', 'SECURITY']
+const TYPES = ['TODO', 'FIXME', 'BUG', 'HACK', 'NOTE', 'OPTIMIZE', 'SECURITY', 'DEPRECATION', 'TICKET', 'TASK', 'DEBT', 'REFACTOR', 'MIGRATION', 'PERF', 'TEST']
 const STATUSES = ['open', 'in_progress', 'blocked', 'resolved']
 const PRIORITIES = ['critical', 'high', 'medium', 'low', 'minimal']
 
 export function Dashboard() {
-  const { notations, stats, connected } = useNotations()
+  const navigate = useNavigate()
+  const { notations, stats, connected, healthScore, gateResult } = useNotations()
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState<string[]>([])
   const [filterStatus, setFilterStatus] = useState('')
   const [filterPriority, setFilterPriority] = useState('')
+  const [scanStatus, setScanStatus] = useState<ScanStatus>('idle')
+  const [scanMessage, setScanMessage] = useState('')
 
   const filtered = useMemo(() => {
     return notations.filter((n) => {
@@ -32,34 +44,67 @@ export function Dashboard() {
   }, [notations, search, filterType, filterStatus, filterPriority])
 
   const handleScan = async () => {
+    setScanStatus('scanning')
+    setScanMessage('')
     try {
-      await triggerScan()
-    } catch {
-      // handled by WebSocket update
+      const { count } = await triggerScan()
+      setScanStatus('success')
+      setScanMessage(`Scanned ${count} items`)
+    } catch (err: any) {
+      setScanStatus('error')
+      setScanMessage('Scan failed')
+    } finally {
+      setTimeout(() => { setScanStatus('idle'); setScanMessage('') }, 3000)
     }
   }
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 700, margin: 0 }}>Tracker Dashboard</h1>
-        <span
-          style={{
-            fontSize: '12px',
-            padding: '2px 8px',
-            borderRadius: '10px',
-            background: connected ? '#dcfce7' : '#fee2e2',
-            color: connected ? '#166534' : '#991b1b',
-          }}
-        >
-          {connected ? 'Connected' : 'Disconnected'}
-        </span>
+    <div className="max-w-[1200px] mx-auto p-6">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-5">
+        <div className="flex items-center gap-3">
+          <span className="text-xl text-primary">&#9670;</span>
+          <h1 className="text-2xl font-bold m-0 text-foreground">Tracker Dashboard</h1>
+          <Badge variant="secondary" className="text-[11px] bg-primary/15 text-primary border-0">
+            v2.0
+          </Badge>
+        </div>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs text-primary bg-primary/15 border-primary/30 hover:bg-primary/25"
+            onClick={() => navigate('/manage')}
+          >
+            Manage
+          </Button>
+          <Badge
+            variant="secondary"
+            className={cn(
+              'text-xs border-0',
+              connected ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400',
+            )}
+          >
+            {connected ? 'Connected' : 'Disconnected'}
+          </Badge>
+        </div>
       </div>
 
-      <StatsPanel stats={stats} />
-      <SearchBar value={search} onChange={setSearch} onScan={handleScan} />
+      <SecurityGate gateResult={gateResult} />
 
-      <div style={{ display: 'flex', gap: '20px' }}>
+      <div className="flex gap-4 mb-4">
+        <div className="flex-1">
+          <HealthScore score={healthScore} />
+        </div>
+      </div>
+
+      <DeprecationPanel />
+      <StatsPanel stats={stats} />
+      <BurnDownChart />
+      <SearchBar value={search} onChange={setSearch} onScan={handleScan} scanStatus={scanStatus} scanMessage={scanMessage} />
+
+      <div className="flex gap-5">
         <FilterSidebar
           types={TYPES}
           statuses={STATUSES}
@@ -71,8 +116,8 @@ export function Dashboard() {
           onStatusChange={setFilterStatus}
           onPriorityChange={setFilterPriority}
         />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>
+        <div className="flex-1">
+          <div className="text-[13px] text-muted-foreground mb-2">
             {filtered.length} notation{filtered.length !== 1 ? 's' : ''}
           </div>
           <NotationList notations={filtered} />

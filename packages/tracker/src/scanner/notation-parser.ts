@@ -4,7 +4,7 @@ import { generateStableId } from '../utils'
 import { parseAttributes } from './attribute-parser'
 import { parseActions } from './action-parser'
 
-const MARKER_REGEX = /^(\s*)\/\/\s*(FIXME|TODO|BUG|HACK|NOTE|OPTIMIZE|SECURITY):?\s*(?:\[([^\]]*)\])?\s*(.*)/
+const MARKER_REGEX = /^(\s*)\/\/\s*(FIXME|TODO|BUG|HACK|NOTE|OPTIMIZE|SECURITY|DEPRECATION):?\s*(?:\[([^\]]*)\])?\s*(.*)/
 
 export function parseFileContent(filePath: string, content: string, idPrefix: string = 'N'): Notation[] {
 	const lines = content.split('\n')
@@ -80,6 +80,8 @@ export function parseFileContent(filePath: string, content: string, idPrefix: st
 			createdDate: attrs.createdDate,
 			performance: attrs.performance,
 			debt: attrs.debt,
+			eolDate: attrs.eolDate,
+			replacement: attrs.replacement,
 			actions,
 			relationships: attrs.relationships,
 			rawBlock: rawLines.join('\n'),

@@ -1,2 +1,5 @@
 export { JsonlStorage } from './jsonl-storage'
-export { loadConfig } from './config-loader'
+export { loadConfig, loadSecrets } from './config-loader'
+export type { ResolvedSecrets } from './config-loader'
+export { SnapshotStorage } from './snapshot-storage'
+export type { Snapshot } from './snapshot-storage'

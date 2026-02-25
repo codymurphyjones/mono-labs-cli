@@ -4,3 +4,6 @@ export { updateStatus, addTag, removeTag, setAssignee } from './notation-updater
 export { validateNotation, validateAll } from './validator'
 export type { ValidationError } from './validator'
 export { computeStats } from './stats'
+export { computeHealthScore } from './health-score'
+export { computeBurnDown } from './projection'
+export type { BurnDownData, BurnDownPoint } from './projection'

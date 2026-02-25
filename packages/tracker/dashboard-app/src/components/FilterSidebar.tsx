@@ -1,4 +1,6 @@
-import { typeColors, priorityColors } from '../constants'
+import { cn } from '@/lib/utils'
+import { getTypeConfig, getPriorityConfig, getStatusConfig } from '@/lib/tracker-config'
+import { Separator } from './ui/separator'
 
 interface FilterSidebarProps {
   types: string[]
@@ -30,29 +32,24 @@ function TypePills({
   }
 
   return (
-    <div style={{ marginBottom: '16px' }}>
-      <div style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '6px', textTransform: 'uppercase' }}>
+    <div className="mb-4">
+      <div className="text-[11px] font-semibold text-muted-foreground/60 mb-1.5 uppercase tracking-wide">
         Type
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+      <div className="flex flex-wrap gap-1">
         {types.map((type) => {
           const active = selected.includes(type)
-          const color = typeColors[type] || '#6b7280'
+          const config = getTypeConfig(type)
           return (
             <button
               key={type}
               onClick={() => toggle(type)}
-              style={{
-                padding: '3px 8px',
-                fontSize: '12px',
-                fontWeight: 600,
-                borderRadius: '12px',
-                cursor: 'pointer',
-                border: `1px solid ${color}`,
-                background: active ? color : 'transparent',
-                color: active ? 'white' : color,
-                transition: 'all 0.1s',
-              }}
+              className={cn(
+                'px-2 py-0.5 text-[11px] font-semibold rounded-full cursor-pointer border transition-all',
+                active
+                  ? cn(config.color, config.bgColor, config.borderColor)
+                  : 'text-muted-foreground border-border bg-transparent hover:bg-accent/50',
+              )}
             >
               {type}
             </button>
@@ -68,50 +65,41 @@ function ButtonGroup({
   options,
   selected,
   onChange,
-  colorMap,
+  getColor,
 }: {
   label: string
   options: string[]
   selected: string
   onChange: (value: string) => void
-  colorMap?: Record<string, string>
+  getColor: (opt: string) => string
 }) {
   const allOptions = ['', ...options]
   const labels = ['All', ...options]
 
   return (
-    <div style={{ marginBottom: '16px' }}>
-      <div style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '6px', textTransform: 'uppercase' }}>
+    <div className="mb-4">
+      <div className="text-[11px] font-semibold text-muted-foreground/60 mb-1.5 uppercase tracking-wide">
         {label}
       </div>
-      <div style={{ display: 'flex' }}>
+      <div className="flex flex-col gap-0.5">
         {allOptions.map((opt, i) => {
           const active = selected === opt
-          const isFirst = i === 0
-          const isLast = i === allOptions.length - 1
-          const activeColor = (opt && colorMap?.[opt]) || '#3b82f6'
+          const dotClass = opt ? getColor(opt) : ''
 
           return (
             <button
               key={opt}
               onClick={() => onChange(opt)}
-              style={{
-                padding: '4px 8px',
-                fontSize: '12px',
-                cursor: 'pointer',
-                border: `1px solid ${active ? activeColor : '#d1d5db'}`,
-                borderLeft: isFirst ? `1px solid ${active ? activeColor : '#d1d5db'}` : 'none',
-                borderRadius: isFirst
-                  ? '4px 0 0 4px'
-                  : isLast
-                    ? '0 4px 4px 0'
-                    : '0',
-                background: active ? activeColor : 'white',
-                color: active ? 'white' : '#374151',
-                fontWeight: active ? 600 : 400,
-                transition: 'all 0.1s',
-              }}
+              className={cn(
+                'flex items-center gap-1.5 px-2.5 py-1 text-xs rounded cursor-pointer border-0 text-left transition-colors',
+                active
+                  ? 'bg-accent text-foreground font-semibold'
+                  : 'bg-transparent text-muted-foreground hover:bg-accent/50',
+              )}
             >
+              {opt && (
+                <span className={cn('size-1.5 rounded-full shrink-0', dotClass)} />
+              )}
               {labels[i]}
             </button>
           )
@@ -133,10 +121,24 @@ export function FilterSidebar({
   onPriorityChange,
 }: FilterSidebarProps) {
   return (
-    <div style={{ width: '200px', flexShrink: 0, paddingRight: '16px', borderRight: '1px solid #e5e7eb' }}>
+    <div className="w-[200px] shrink-0 pr-4 border-r">
       <TypePills types={types} selected={selectedTypes} onChange={onTypeChange} />
-      <ButtonGroup label="Status" options={statuses} selected={selectedStatus} onChange={onStatusChange} />
-      <ButtonGroup label="Priority" options={priorities} selected={selectedPriority} onChange={onPriorityChange} colorMap={priorityColors} />
+      <Separator className="my-3" />
+      <ButtonGroup
+        label="Status"
+        options={statuses}
+        selected={selectedStatus}
+        onChange={onStatusChange}
+        getColor={(opt) => getStatusConfig(opt).dot}
+      />
+      <Separator className="my-3" />
+      <ButtonGroup
+        label="Priority"
+        options={priorities}
+        selected={selectedPriority}
+        onChange={onPriorityChange}
+        getColor={(opt) => getPriorityConfig(opt).dot}
+      />
     </div>
   )
 }

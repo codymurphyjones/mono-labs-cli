@@ -1,4 +1,4 @@
-import type { NotationAction } from '../types'
+import type { NotationAction, Notation } from '../types'
 
 export interface ActionResult {
 	success: boolean
@@ -6,7 +6,7 @@ export interface ActionResult {
 	verb: string
 }
 
-export type ActionHandler = (action: NotationAction) => Promise<ActionResult>
+export type ActionHandler = (action: NotationAction, notation: Notation, projectRoot: string) => Promise<ActionResult>
 
 const handlers = new Map<string, ActionHandler>()
 
@@ -14,7 +14,7 @@ export function registerActionHandler(verb: string, handler: ActionHandler): voi
 	handlers.set(verb, handler)
 }
 
-export async function executeAction(action: NotationAction): Promise<ActionResult> {
+export async function executeAction(action: NotationAction, notation: Notation, projectRoot: string): Promise<ActionResult> {
 	const handler = handlers.get(action.verb)
 	if (!handler) {
 		return {
@@ -23,5 +23,5 @@ export async function executeAction(action: NotationAction): Promise<ActionResul
 			verb: action.verb,
 		}
 	}
-	return handler(action)
+	return handler(action, notation, projectRoot)
 }

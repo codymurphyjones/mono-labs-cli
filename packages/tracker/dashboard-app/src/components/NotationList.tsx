@@ -1,5 +1,8 @@
 import { useNavigate } from 'react-router-dom'
-import { typeColors, priorityColors } from '../constants'
+import { cn } from '@/lib/utils'
+import { getTypeConfig, getPriorityConfig } from '@/lib/tracker-config'
+import { Badge } from './ui/badge'
+import { AuthorAvatar } from './AuthorAvatar'
 
 interface Notation {
   id: string
@@ -11,6 +14,7 @@ interface Notation {
   tags: string[]
   assignee?: string
   dueDate?: string
+  blame?: { author: string; email: string; date: string; commitHash: string }
 }
 
 interface NotationListProps {
@@ -28,63 +32,54 @@ export function NotationList({ notations }: NotationListProps) {
 
   if (notations.length === 0) {
     return (
-      <div style={{ padding: '40px', textAlign: 'center', color: '#9ca3af' }}>
+      <div className="p-10 text-center text-muted-foreground">
         No notations found
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      {notations.map((n) => (
-        <div
-          key={n.id}
-          onClick={() => navigate(`/notation/${n.id}`)}
-          style={{
-            padding: '10px 14px',
-            borderRadius: '6px',
-            border: '1px solid #e5e7eb',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            transition: 'background 0.1s',
-          }}
-          onMouseOver={(e) => (e.currentTarget.style.background = '#f9fafb')}
-          onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
-        >
-          <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 700,
-              padding: '2px 6px',
-              borderRadius: '4px',
-              color: 'white',
-              background: typeColors[n.type] || '#6b7280',
-              flexShrink: 0,
-            }}
+    <div className="flex flex-col gap-1">
+      {notations.map((n) => {
+        const tConfig = getTypeConfig(n.type)
+        const pConfig = n.priority ? getPriorityConfig(n.priority) : undefined
+
+        return (
+          <div
+            key={n.id}
+            onClick={() => navigate(`/notation/${n.id}`)}
+            className="flex items-center gap-2.5 p-2.5 px-3.5 rounded-md border cursor-pointer transition-colors hover:bg-accent/30"
           >
-            {n.type}
-          </span>
-          <span style={{ flex: 1, fontSize: '14px', color: '#111827' }}>{n.description}</span>
-          {n.priority && (
-            <span
-              style={{
-                fontSize: '11px',
-                padding: '1px 6px',
-                borderRadius: '4px',
-                border: `1px solid ${priorityColors[n.priority] || '#d1d5db'}`,
-                color: priorityColors[n.priority] || '#6b7280',
-              }}
+            {/* Avatar */}
+            {n.blame && (
+              <AuthorAvatar name={n.blame.author} email={n.blame.email} size={20} />
+            )}
+            {/* Type badge */}
+            <Badge
+              variant="outline"
+              className={cn('text-[11px] font-bold shrink-0', tConfig.color, tConfig.bgColor, tConfig.borderColor)}
             >
-              {n.priority}
+              {n.type}
+            </Badge>
+            {/* Description */}
+            <span className="flex-1 text-sm text-foreground/90">{n.description}</span>
+            {/* Priority */}
+            {n.priority && pConfig && (
+              <span className={cn(
+                'inline-flex items-center gap-1 text-[11px] px-1.5 rounded border border-transparent',
+                pConfig.color,
+              )}>
+                <span className={cn('size-[5px] rounded-full', pConfig.dot)} />
+                {n.priority}
+              </span>
+            )}
+            {/* File path */}
+            <span className="text-[11px] text-muted-foreground/60 shrink-0">
+              {shortenPath(n.location.file)}:{n.location.line}
             </span>
-          )}
-          <span style={{ fontSize: '11px', color: '#9ca3af', flexShrink: 0 }}>
-            {shortenPath(n.location.file)}:{n.location.line}
-          </span>
-        </div>
-      ))}
+          </div>
+        )
+      })}
     </div>
   )
 }

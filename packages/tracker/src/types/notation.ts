@@ -36,6 +36,10 @@ export interface Notation {
 	createdDate?: string
 	performance?: PerformanceImpact
 	debt?: TechnicalDebt
+	eolDate?: string
+	replacement?: string
+	blame?: { author: string; email: string; date: string; commitHash: string }
+	linkedIssue?: string
 	actions: NotationAction[]
 	relationships: string[]
 	rawBlock: string

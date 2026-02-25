@@ -1,20 +1,13 @@
 import type { NotationAction } from '../hooks/useNotations'
+import { cn } from '@/lib/utils'
+import { getVerbColor } from '@/lib/tracker-config'
+import { Badge } from './ui/badge'
+import { Button } from './ui/button'
 
 interface ActionDisplayProps {
   action: NotationAction
   onEdit: () => void
   onDelete: () => void
-}
-
-const verbColors: Record<string, string> = {
-  replace: '#f59e0b',
-  remove: '#ef4444',
-  rename: '#3b82f6',
-  insert: '#10b981',
-  extract: '#8b5cf6',
-  move: '#6366f1',
-  wrapIn: '#ec4899',
-  generic: '#6b7280',
 }
 
 function formatArgs(action: NotationAction): string {
@@ -42,65 +35,25 @@ function formatArgs(action: NotationAction): string {
 }
 
 export function ActionDisplay({ action, onEdit, onDelete }: ActionDisplayProps) {
-  const color = verbColors[action.verb] || '#6b7280'
+  const verbColor = getVerbColor(action.verb)
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '6px 10px',
-        background: '#f9fafb',
-        borderRadius: '6px',
-        border: '1px solid #e5e7eb',
-      }}
-    >
-      <span
-        style={{
-          fontSize: '11px',
-          fontWeight: 700,
-          padding: '2px 6px',
-          borderRadius: '4px',
-          color: 'white',
-          background: color,
-          flexShrink: 0,
-          textTransform: 'uppercase',
-        }}
+    <div className="flex items-center gap-2 p-1.5 px-2.5 bg-card rounded-md border">
+      <Badge
+        variant="outline"
+        className={cn('text-[11px] font-bold uppercase shrink-0', verbColor)}
       >
         {action.verb}
-      </span>
-      <span style={{ flex: 1, fontSize: '13px', color: '#374151', fontFamily: 'monospace' }}>
+      </Badge>
+      <span className="flex-1 text-[13px] text-secondary-foreground font-mono">
         {formatArgs(action)}
       </span>
-      <button
-        onClick={onEdit}
-        style={{
-          padding: '2px 6px',
-          fontSize: '11px',
-          background: 'transparent',
-          border: '1px solid #d1d5db',
-          borderRadius: '3px',
-          cursor: 'pointer',
-          color: '#6b7280',
-        }}
-      >
+      <Button variant="outline" size="sm" className="h-6 px-1.5 text-[11px] text-muted-foreground" onClick={onEdit}>
         Edit
-      </button>
-      <button
-        onClick={onDelete}
-        style={{
-          padding: '2px 6px',
-          fontSize: '11px',
-          background: 'transparent',
-          border: '1px solid #fecaca',
-          borderRadius: '3px',
-          cursor: 'pointer',
-          color: '#dc2626',
-        }}
-      >
+      </Button>
+      <Button variant="outline" size="sm" className="h-6 px-1.5 text-[11px] text-red-400 border-red-500/30" onClick={onDelete}>
         Delete
-      </button>
+      </Button>
     </div>
   )
 }

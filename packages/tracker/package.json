@@ -28,15 +28,15 @@
   "scripts": {
     "dev": "concurrently -n api,app -c blue,green \"yarn dev:server\" \"yarn dev:client\"",
     "dev:server": "tsx src/dashboard/cli.ts",
-    "dev:client": "npx vite --config dashboard-app/vite.config.ts",
+    "dev:client": "yarn vite --config dashboard-app/vite.config.ts",
     "build": "tsc",
-    "build:dashboard": "npx vite build --config dashboard-app/vite.config.ts",
-    "build:all": "tsc && npx vite build --config dashboard-app/vite.config.ts",
+    "build:dashboard": "yarn vite build --config dashboard-app/vite.config.ts",
+    "build:all": "tsc && yarn vite build --config dashboard-app/vite.config.ts",
     "test": "vitest run",
-    "deploy": "tsc && npx vite build --config dashboard-app/vite.config.ts && npm publish --access public --registry https://registry.npmjs.org/",
-    "release:patch": "npm version patch -m \"chore: release %s\" && tsc && npx vite build --config dashboard-app/vite.config.ts && npm publish --access public",
-    "release:minor": "npm version minor -m \"chore: release %s\" && tsc && npx vite build --config dashboard-app/vite.config.ts && npm publish --access public",
-    "release:major": "npm version major -m \"chore: release %s\" && tsc && npx vite build --config dashboard-app/vite.config.ts && npm publish --access public"
+    "deploy": "tsc && yarn vite build --config dashboard-app/vite.config.ts && npm publish --access public --registry https://registry.npmjs.org/",
+    "release:patch": "npm version patch -m \"chore: release %s\" && tsc && yarn vite build --config dashboard-app/vite.config.ts && npm publish --access public",
+    "release:minor": "npm version minor -m \"chore: release %s\" && tsc && yarn vite build --config dashboard-app/vite.config.ts && npm publish --access public",
+    "release:major": "npm version major -m \"chore: release %s\" && tsc && yarn vite build --config dashboard-app/vite.config.ts && npm publish --access public"
   },
   "license": "MIT",
   "dependencies": {
