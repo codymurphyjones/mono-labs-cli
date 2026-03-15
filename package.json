@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "mono-labs",
-  "version": "0.1.277",
+  "version": "0.1.278",
   "workspaces": [
     "packages/*"
   ],
