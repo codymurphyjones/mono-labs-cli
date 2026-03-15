@@ -71,4 +71,10 @@ export interface SocketAdapterConfig {
 	channelStore?: import('./channel-store').ChannelStore
 	useRedis?: boolean
 	redis?: RedisConfig
+	/** Enable ws.ping heartbeat (default: true) */
+	ping?: boolean
+	/** Ping interval in ms (default: 30000) */
+	pingInterval?: number
+	/** Time to wait for pong before considering connection dead (default: 10000) */
+	pingTimeout?: number
 }

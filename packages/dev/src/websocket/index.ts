@@ -79,6 +79,37 @@ export function attachSocketAdapter(wss: WebSocketServer, config?: SocketAdapter
 	// Reverse lookup: WebSocket → connectionId
 	const wsToConnectionId = new WeakMap<WebSocket, ConnectionId>()
 
+	// Heartbeat tracking
+	const pingEnabled = config?.ping ?? true
+	const pingInterval = config?.pingInterval ?? 30_000
+	const pingTimeout = config?.pingTimeout ?? 10_000
+	const aliveSet = new Set<WebSocket>()
+	let heartbeatTimer: ReturnType<typeof setInterval> | undefined
+
+	if (pingEnabled) {
+		heartbeatTimer = setInterval(() => {
+			for (const ws of wss.clients) {
+				if (!aliveSet.has(ws)) {
+					const cid = wsToConnectionId.get(ws)
+					if (debug) console.log(`[socket-adapter] ping timeout — terminating connectionId=${cid}`)
+					ws.terminate()
+					continue
+				}
+				aliveSet.delete(ws)
+				ws.ping()
+				if (debug) {
+					const cid = wsToConnectionId.get(ws)
+					console.log(`[socket-adapter] ping sent to connectionId=${cid}`)
+				}
+			}
+		}, pingInterval)
+
+		wss.on('close', () => {
+			clearInterval(heartbeatTimer)
+			if (debug) console.log(`[socket-adapter] heartbeat interval cleared`)
+		})
+	}
+
 	wss.on('connection', async (ws: WebSocket, req) => {
 		// 1. Extract token from query string
 		const url = new URL(req.url ?? '', `http://${req.headers.host ?? 'localhost'}`)
@@ -118,6 +149,15 @@ export function attachSocketAdapter(wss: WebSocketServer, config?: SocketAdapter
 		ws.send(JSON.stringify(welcomeMessage))
 		if (debug) console.log(`[socket-adapter] welcome sent to ${connectionId}${userContext ? ` userId=${userContext.userId}` : ''}`)
 
+		// 6b. Register for heartbeat
+		if (pingEnabled) {
+			aliveSet.add(ws)
+			ws.on('pong', () => {
+				aliveSet.add(ws)
+				if (debug) console.log(`[socket-adapter] pong received from connectionId=${connectionId}`)
+			})
+		}
+
 		// 7. Route incoming messages through ActionRouter
 		ws.on('message', async (raw) => {
 			const rawBody = raw.toString()
@@ -150,6 +190,7 @@ export function attachSocketAdapter(wss: WebSocketServer, config?: SocketAdapter
 				)
 			}
 
+			aliveSet.delete(ws)
 			await channelStore.removeAll(connectionId)
 			await disconnectHandler(connectionId)
 			connectionRegistry.unregister(connectionId)
