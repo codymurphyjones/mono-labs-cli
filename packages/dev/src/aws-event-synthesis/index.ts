@@ -80,6 +80,7 @@ export function sendLambdaResult(
 		headers?: Record<string, any>
 		body?: string
 		isBase64Encoded?: boolean
+		cookies?: string[]
 	}
 ): void {
 	const statusCode = result.statusCode ?? 200
@@ -87,6 +88,12 @@ export function sendLambdaResult(
 	if (result.headers) {
 		for (const [key, value] of Object.entries(result.headers)) {
 			res.setHeader(key, value)
+		}
+	}
+
+	if (result.cookies) {
+		for (const cookie of result.cookies) {
+			res.append('set-cookie', cookie)
 		}
 	}
 
