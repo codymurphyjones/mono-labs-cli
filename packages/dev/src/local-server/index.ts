@@ -1,7 +1,6 @@
 import http from 'node:http';
 
 import express from 'express';
-import cors from 'cors';
 import { WebSocketServer } from 'ws';
 
 import {
@@ -35,8 +34,6 @@ export class LocalServer {
 		this.app = express();
 
 		this.app.use(express.json());
-		this.app.use(cors());
-
 		this.app.get('/', (_req, res) => {
 			res.send('Hello from Express HTTP Server');
 		});
